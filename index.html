@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Thần Số Học - 4 Trường Phái</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg-1: #0f0c29; --bg-2: #302b63; --bg-3: #24243e;
+    --gold: #f7d774; --gold-2: #e8b94a;
+    --purple: #9d7ee8; --pink: #f093fb; --red: #ff6b8a;
+    --green: #6ee7b7; --orange: #ffa94d; --blue: #6ec5ff;
+    --text: #f5f5f7; --text-dim: #b8b8d4; --text-mute: #8a8aa8;
+    --card: rgba(255, 255, 255, 0.06); --card-border: rgba(255, 255, 255, 0.12);
+    --shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+    --kd: #ff6b8a; --master: #ffd700;
+  }
+  body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+    background: linear-gradient(135deg, var(--bg-1), var(--bg-2), var(--bg-3));
+    background-attachment: fixed; color: var(--text);
+    min-height: 100vh; line-height: 1.6; overflow-x: hidden;
+  }
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background-image:
+      radial-gradient(2px 2px at 20% 30%, white, transparent),
+      radial-gradient(1px 1px at 60% 70%, white, transparent),
+      radial-gradient(1.5px 1.5px at 80% 20%, white, transparent),
+      radial-gradient(1px 1px at 30% 80%, white, transparent),
+      radial-gradient(1.5px 1.5px at 90% 50%, white, transparent),
+      radial-gradient(1px 1px at 10% 60%, white, transparent),
+      radial-gradient(2px 2px at 50% 10%, white, transparent);
+    background-size: 100% 100%; opacity: 0.4; pointer-events: none; z-index: 0;
+  }
+  .container { max-width: 1200px; margin: 0 auto; padding: 24px 18px; position: relative; z-index: 1; }
+  header { text-align: center; padding: 16px 0; }
+  header h1 {
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    background: linear-gradient(135deg, var(--gold), var(--pink), var(--purple));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    margin-bottom: 6px; letter-spacing: 1px;
+  }
+  header p { color: var(--text-dim); font-size: 0.95rem; }
+
+  /* SCHOOL SELECTOR */
+  .school-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px; margin-top: 30px;
+  }
+  .school-card {
+    background: var(--card); border: 2px solid var(--card-border);
+    border-radius: 18px; padding: 28px 24px; cursor: pointer;
+    transition: all 0.3s; position: relative; overflow: hidden;
+    backdrop-filter: blur(10px);
+  }
+  .school-card::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(135deg, transparent, var(--accent, transparent));
+    opacity: 0.05; transition: opacity 0.3s;
+  }
+  .school-card:hover { transform: translateY(-6px); border-color: var(--accent, var(--gold)); box-shadow: 0 20px 50px rgba(0,0,0,0.4); }
+  .school-card:hover::before { opacity: 0.15; }
+  .school-card .icon {
+    font-size: 3.2rem; line-height: 1; margin-bottom: 14px; color: var(--accent, var(--gold));
+    text-align: center;
+  }
+  .school-card h3 {
+    font-size: 1.25rem; margin-bottom: 8px; text-align: center;
+    color: var(--accent, var(--gold));
+  }
+  .school-card .origin {
+    text-align: center; color: var(--text-mute); font-size: 0.78rem;
+    text-transform: uppercase; letter-spacing: 2px; margin-bottom: 14px;
+  }
+  .school-card p { color: var(--text-dim); font-size: 0.88rem; line-height: 1.6; }
+  .school-card .features {
+    margin-top: 14px; padding-top: 14px;
+    border-top: 1px solid var(--card-border);
+    font-size: 0.82rem; color: var(--text-mute);
+  }
+  .school-card .features li { padding: 3px 0; list-style: none; }
+  .school-card .features li::before { content: '✓ '; color: var(--accent, var(--gold)); }
+
+  /* APP HEADER (when in school view) */
+  .app-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 18px; margin-bottom: 16px;
+    background: var(--card); border: 1px solid var(--card-border); border-radius: 14px;
+  }
+  .app-bar .school-info { display: flex; align-items: center; gap: 10px; }
+  .app-bar .school-info .icon { font-size: 1.6rem; color: var(--accent, var(--gold)); }
+  .app-bar .school-info .name { font-weight: 600; color: var(--text); }
+  .app-bar .school-info .sub { font-size: 0.78rem; color: var(--text-mute); }
+  .back-btn {
+    background: rgba(255,255,255,0.08); color: var(--text-dim); border: 1px solid var(--card-border);
+    padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 0.85rem;
+    font-family: inherit; transition: all 0.2s;
+  }
+  .back-btn:hover { background: rgba(255,255,255,0.15); color: var(--text); }
+
+  /* TABS */
+  .tabs {
+    display: flex; gap: 8px; margin: 14px 0 18px;
+    background: var(--card); border-radius: 14px; padding: 6px;
+    border: 1px solid var(--card-border); flex-wrap: wrap;
+  }
+  .tab {
+    flex: 1; min-width: 110px; padding: 11px 14px;
+    background: transparent; color: var(--text-dim);
+    border: none; border-radius: 10px; cursor: pointer;
+    font-size: 0.92rem; font-weight: 500; transition: all 0.25s;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active {
+    background: linear-gradient(135deg, var(--gold), var(--gold-2));
+    color: #1a1530; font-weight: 600;
+    box-shadow: 0 4px 20px rgba(247, 215, 116, 0.3);
+  }
+
+  .panel { display: none; animation: fade 0.4s ease; }
+  .panel.active { display: block; }
+  @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .school-section { display: none; }
+  .school-section.active { display: block; }
+
+  .card {
+    background: var(--card); border: 1px solid var(--card-border);
+    border-radius: 16px; padding: 22px; margin-bottom: 16px;
+    backdrop-filter: blur(10px); box-shadow: var(--shadow);
+  }
+  .card h2 { color: var(--gold); margin-bottom: 12px; font-size: 1.2rem; }
+  .form-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+  .field { flex: 1; min-width: 180px; }
+  label { display: block; font-size: 0.85rem; color: var(--text-dim); margin-bottom: 6px; }
+  input[type="text"], input[type="date"] {
+    width: 100%; padding: 12px 14px; border-radius: 10px;
+    background: rgba(0, 0, 0, 0.25); border: 1px solid var(--card-border);
+    color: var(--text); font-size: 1rem; font-family: inherit;
+  }
+  input:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(247, 215, 116, 0.15); }
+  input[type="date"] { color-scheme: dark; }
+  button.cta {
+    background: linear-gradient(135deg, var(--gold), var(--gold-2));
+    color: #1a1530; border: none; padding: 12px 24px;
+    border-radius: 10px; font-weight: 600; font-size: 1rem;
+    cursor: pointer; transition: all 0.2s; font-family: inherit;
+  }
+  button.cta:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(247, 215, 116, 0.4); }
+  .results { margin-top: 20px; }
+
+  .number-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+  .num-card {
+    position: relative;
+    background: linear-gradient(135deg, rgba(157, 126, 232, 0.15), rgba(247, 215, 116, 0.06));
+    border: 1px solid var(--card-border);
+    border-radius: 14px; padding: 16px;
+    transition: all 0.2s; cursor: pointer;
+  }
+  .num-card:hover { transform: translateY(-3px); border-color: var(--gold); }
+  .num-card .label { font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+  .num-card .value {
+    font-size: 2.4rem; font-weight: 700; line-height: 1; margin: 6px 0;
+    background: linear-gradient(135deg, var(--gold), var(--pink));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .num-card .desc { font-size: 0.78rem; color: var(--text-dim); line-height: 1.4; margin-top: 4px; }
+  .num-card .info { position: absolute; top: 8px; right: 10px; width: 18px; height: 18px; border-radius: 50%; background: rgba(255,255,255,0.1); color: var(--text-dim); font-size: 0.7rem; display: flex; align-items: center; justify-content: center; }
+  .kd-badge { position: absolute; top: -7px; left: 10px; background: var(--kd); color: white; font-size: 0.62rem; font-weight: 700; padding: 2px 7px; border-radius: 5px; box-shadow: 0 2px 6px rgba(255,107,138,0.4); }
+  .master-badge { position: absolute; top: -7px; left: 10px; background: linear-gradient(135deg, #ffd700, #f7d774); color: #1a1530; font-size: 0.62rem; font-weight: 700; padding: 2px 7px; border-radius: 5px; box-shadow: 0 2px 6px rgba(255,215,0,0.5); }
+  .num-card.kd { border-color: var(--kd); }
+  .num-card.master { border-color: var(--master); }
+  .multi-num { font-size: 1.5rem !important; letter-spacing: 4px; }
+
+  .pinnacle-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+  .pinnacle { background: rgba(157,126,232,0.12); border-left: 3px solid var(--purple); padding: 14px; border-radius: 10px; }
+  .pinnacle .age { font-size: 0.78rem; color: var(--text-dim); }
+  .pinnacle .name { font-weight: 600; color: var(--gold); margin: 4px 0; }
+  .pinnacle .num { font-size: 1.7rem; font-weight: 700; color: var(--pink); cursor: pointer; }
+  .challenge { border-left-color: var(--pink); background: rgba(240,147,251,0.10); }
+  .challenge .num { color: var(--gold); }
+
+  .birth-chart { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-width: 320px; margin: 16px auto; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 14px; }
+  .bc-cell { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--card); border-radius: 10px; border: 1px solid var(--card-border); padding: 8px; }
+  .bc-cell .n { font-size: 1.4rem; font-weight: 700; color: var(--gold); }
+  .bc-cell .c { font-size: 0.75rem; color: var(--text-dim); }
+  .bc-cell.empty .n { opacity: 0.25; }
+  .bc-cell.passion { border-color: var(--pink); box-shadow: 0 0 12px rgba(240,147,251,0.3); }
+
+  .meaning { background: var(--card); border-left: 3px solid var(--gold); padding: 14px 18px; border-radius: 10px; margin-top: 12px; line-height: 1.7; }
+  .meaning h3 { color: var(--gold); margin-bottom: 6px; font-size: 1.05rem; }
+  .meaning p { color: var(--text-dim); font-size: 0.95rem; margin-bottom: 6px; }
+  .keywords { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .keywords span { background: rgba(247,215,116,0.15); color: var(--gold); padding: 4px 10px; border-radius: 14px; font-size: 0.78rem; }
+
+  .number-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+  .number-list .item { background: var(--card); border: 1px solid var(--card-border); border-radius: 12px; padding: 16px; cursor: pointer; transition: all 0.2s; }
+  .number-list .item:hover { border-color: var(--gold); transform: translateY(-2px); }
+  .number-list .item .head { display: flex; align-items: center; gap: 12px; }
+  .number-list .item .big-num { font-size: 2rem; font-weight: 700; background: linear-gradient(135deg, var(--gold), var(--pink)); -webkit-background-clip: text; background-clip: text; color: transparent; min-width: 40px; }
+  .number-list .item .title { font-weight: 600; color: var(--text); }
+  .number-list .item .summary { font-size: 0.83rem; color: var(--text-dim); margin-top: 6px; }
+
+  .info-box { background: rgba(157,126,232,0.1); border: 1px solid rgba(157,126,232,0.3); border-radius: 10px; padding: 12px; font-size: 0.85rem; color: var(--text-dim); margin-top: 12px; }
+  .info-box strong { color: var(--purple); }
+  .section-title { color: var(--gold); margin: 22px 0 10px; font-size: 1.05rem; border-bottom: 1px solid var(--card-border); padding-bottom: 6px; }
+
+  .energy-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 12px; }
+  .energy-col { background: rgba(0,0,0,0.2); border-radius: 10px; padding: 12px; border-top: 3px solid; }
+  .energy-col.standard { border-top-color: var(--green); }
+  .energy-col.reverse { border-top-color: var(--orange); }
+  .energy-col.excess { border-top-color: var(--red); }
+  .energy-col h4 { font-size: 0.82rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+  .energy-col.standard h4 { color: var(--green); }
+  .energy-col.reverse h4 { color: var(--orange); }
+  .energy-col.excess h4 { color: var(--red); }
+  .energy-col ul { list-style: none; padding: 0; }
+  .energy-col li { font-size: 0.82rem; color: var(--text-dim); padding: 3px 0; line-height: 1.5; }
+  .energy-col li::before { content: '• '; color: inherit; }
+
+  .levels { margin-top: 12px; }
+  .level-row { display: flex; gap: 12px; margin-bottom: 8px; padding: 10px; background: rgba(0,0,0,0.15); border-radius: 8px; border-left: 3px solid var(--purple); }
+  .level-num { flex: 0 0 auto; width: 50px; text-align: center; background: linear-gradient(135deg, var(--purple), var(--pink)); color: white; padding: 6px; border-radius: 6px; font-size: 0.78rem; font-weight: 700; }
+  .level-text { flex: 1; font-size: 0.88rem; color: var(--text-dim); line-height: 1.5; }
+
+  .famous-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .famous-item { background: rgba(247,215,116,0.1); border: 1px solid rgba(247,215,116,0.3); padding: 6px 12px; border-radius: 16px; font-size: 0.82rem; }
+  .famous-item .who { color: var(--gold); font-weight: 600; }
+  .famous-item .role { color: var(--text-dim); font-size: 0.78rem; }
+
+  .quote-box { background: linear-gradient(135deg, rgba(157,126,232,0.15), rgba(240,147,251,0.08)); border-left: 3px solid var(--pink); padding: 14px 16px; border-radius: 10px; margin-top: 10px; }
+  .quote-box p { font-style: italic; color: var(--text); font-size: 0.92rem; }
+  .quote-box .author { color: var(--pink); font-size: 0.82rem; margin-top: 6px; font-weight: 600; }
+
+  .trait-list { list-style: none; padding: 0; margin-top: 10px; }
+  .trait-list li { background: rgba(0,0,0,0.18); padding: 10px 14px; margin-bottom: 6px; border-radius: 8px; border-left: 3px solid var(--gold); color: var(--text-dim); font-size: 0.9rem; }
+
+  /* Vedic-specific styling */
+  .planet-card { display: flex; align-items: center; gap: 14px; padding: 14px; background: rgba(0,0,0,0.2); border-radius: 12px; margin-top: 8px; border-left: 3px solid var(--blue); }
+  .planet-card .planet { font-size: 2rem; }
+  .planet-card .info h4 { color: var(--blue); font-size: 1rem; margin-bottom: 4px; }
+  .planet-card .info p { color: var(--text-dim); font-size: 0.85rem; line-height: 1.5; }
+
+  /* Kabbalah-specific */
+  .path-card { display: flex; align-items: center; gap: 14px; padding: 14px; background: rgba(157,126,232,0.1); border-radius: 12px; margin-top: 8px; border-left: 3px solid var(--purple); }
+  .hebrew-letter { font-size: 2.2rem; color: var(--purple); font-weight: bold; }
+
+  .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
+  .modal.show { display: flex; }
+  .modal-content { background: linear-gradient(135deg, var(--bg-2), var(--bg-3)); border: 1px solid var(--card-border); border-radius: 18px; padding: 26px; max-width: 720px; width: 100%; max-height: 88vh; overflow-y: auto; }
+  .modal-content .close { float: right; cursor: pointer; font-size: 1.5rem; color: var(--text-dim); border: none; background: none; }
+  .modal-content h2 { background: linear-gradient(135deg, var(--gold), var(--pink)); -webkit-background-clip: text; background-clip: text; color: transparent; font-size: 1.5rem; margin-bottom: 6px; }
+  .modal-content .archetype-line { color: var(--text-mute); font-size: 0.85rem; letter-spacing: 2px; margin-bottom: 14px; text-transform: uppercase; }
+  .modal-content h3 { color: var(--gold); margin: 16px 0 8px; font-size: 1rem; }
+  .modal-content p { color: var(--text-dim); margin-bottom: 6px; font-size: 0.92rem; }
+
+  footer { text-align: center; padding: 26px 0 16px; color: var(--text-dim); font-size: 0.82rem; }
+
+  @media (max-width: 720px) {
+    .energy-grid { grid-template-columns: 1fr; }
+    .number-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 600px) {
+    .form-row { flex-direction: column; align-items: stretch; }
+    .field { min-width: unset; }
+    button.cta { width: 100%; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>✦ Thần Số Học ✦</h1>
+    <p>4 trường phái lớn của thế giới — chọn 1 để bắt đầu</p>
+  </header>
+
+  <!-- SCHOOL SELECTOR -->
+  <div id="selector" class="school-section active">
+    <div class="school-grid">
+      <div class="school-card" style="--accent: var(--gold)" onclick="selectSchool('pythagoras')">
+        <div class="icon">✦</div>
+        <h3>Pythagoras</h3>
+        <div class="origin">Phương Tây · Hy Lạp</div>
+        <p>Trường phái phổ biến nhất, xuất phát từ triết gia Pythagoras (570 TCN). Dùng số 1-9 với Master 11, 22, 33. Bảng chữ cái lặp tuần hoàn A=1...I=9.</p>
+        <ul class="features">
+          <li>Số Đường đời, Sứ mệnh, Linh hồn, Nhân cách</li>
+          <li>Master Number 11/22/33</li>
+          <li>Karmic Debt 13/14/16/19</li>
+          <li>4 Chặng cuộc đời + Bảng đồ</li>
+        </ul>
+      </div>
+
+      <div class="school-card" style="--accent: var(--orange)" onclick="selectSchool('chaldean')">
+        <div class="icon">☉</div>
+        <h3>Chaldean</h3>
+        <div class="origin">Babylon · ~4000 năm tuổi</div>
+        <p>Hệ cổ xưa nhất, có trước Pythagoras hàng ngàn năm. Chỉ dùng số 1-8 (số 9 thiêng liêng). Gán chữ cái theo <strong>rung động âm thanh</strong>, không theo thứ tự ABC.</p>
+        <ul class="features">
+          <li>Số Tâm linh (Day Number)</li>
+          <li>Số Định mệnh (Destiny)</li>
+          <li>Số Tên (Name)</li>
+          <li>Compound Numbers (số ghép) có ý nghĩa riêng</li>
+        </ul>
+      </div>
+
+      <div class="school-card" style="--accent: var(--purple)" onclick="selectSchool('kabbalah')">
+        <div class="icon">✡</div>
+        <h3>Kabbalah</h3>
+        <div class="origin">Do Thái · Hebrew</div>
+        <p>Bắt nguồn từ thần học Do Thái cổ. Dựa trên 22 chữ Hebrew và Cây Sự Sống. <strong>Chỉ phân tích tên</strong>, không tính ngày sinh. Kết quả là 1 trong 22 đường năng lượng.</p>
+        <ul class="features">
+          <li>22 đường năng lượng (Paths)</li>
+          <li>Liên kết với Tarot Major Arcana</li>
+          <li>Ý nghĩa qua Tree of Life</li>
+          <li>Tập trung vào tên và số phận</li>
+        </ul>
+      </div>
+
+      <div class="school-card" style="--accent: var(--blue)" onclick="selectSchool('vedic')">
+        <div class="icon">☸</div>
+        <h3>Vệ Đà</h3>
+        <div class="origin">Ấn Độ · Vedic</div>
+        <p>Liên kết 9 con số với 9 hành tinh trong chiêm tinh Ấn Độ. Rất chú trọng <strong>ngày sinh</strong> hơn là tên. Tích hợp với Astro: cung mặt trời, mặt trăng, các nakshatra.</p>
+        <ul class="features">
+          <li>Tâm số (Mulank/Psychic) - ngày sinh</li>
+          <li>Số mệnh (Bhagyank/Destiny)</li>
+          <li>Số tên (Name)</li>
+          <li>9 Hành tinh: Mặt Trời, Mặt Trăng, Mộc, Rahu, Thủy, Kim, Ketu, Thổ, Hỏa</li>
+        </ul>
+      </div>
+    </div>
+    <div class="info-box" style="margin-top:24px;">
+      <strong>Mẹo:</strong> Bạn có thể thử cả 4 trường phái với cùng họ tên + ngày sinh để so sánh. Mỗi trường phái sẽ có góc nhìn khác nhau — Pythagoras sâu nhất về tính cách, Chaldean chính xác về tên, Kabbalah tập trung số phận tâm linh, Vệ Đà gắn với hành tinh và chu kỳ vũ trụ.
+    </div>
+  </div>
+
+  <!-- ============== PYTHAGORAS APP ============== -->
+  <div id="app-pythagoras" class="school-section">
+    <div class="app-bar">
+      <div class="school-info">
+        <span class="icon" style="--accent:var(--gold)">✦</span>
+        <div><div class="name">Pythagoras (Phương Tây)</div><div class="sub">Hệ cổ điển 1-9 + Master 11/22/33</div></div>
+      </div>
+      <button class="back-btn" onclick="goBack()">← Đổi trường phái</button>
+    </div>
+    <nav class="tabs">
+      <button class="tab active" data-tab="py-profile" data-school="py">Hồ sơ đầy đủ</button>
+      <button class="tab" data-tab="py-pinnacle" data-school="py">Chặng &amp; Thử thách</button>
+      <button class="tab" data-tab="py-library" data-school="py">Thư viện</button>
+    </nav>
+    <section class="panel active" id="py-profile">
+      <div class="card">
+        <h2>🌟 Nhập thông tin</h2>
+        <div class="form-row">
+          <div class="field"><label>Họ và tên đầy đủ</label><input type="text" id="py-name" placeholder="Ví dụ: Nguyễn Văn An"></div>
+          <div class="field"><label>Ngày sinh dương lịch</label><input type="date" id="py-dob"></div>
+          <button class="cta" onclick="calcPythagoras()">Xem kết quả</button>
+        </div>
+        <div id="py-results" class="results"></div>
+      </div>
+    </section>
+    <section class="panel" id="py-pinnacle">
+      <div class="card">
+        <h2>⛰️ Biểu đồ Chặng &amp; Thử thách</h2>
+        <div class="form-row">
+          <div class="field"><label>Ngày sinh dương lịch</label><input type="date" id="py-dob2"></div>
+          <button class="cta" onclick="calcPyPinnacle()">Vẽ biểu đồ</button>
+        </div>
+        <div id="py-pinnacle-results" class="results"></div>
+      </div>
+    </section>
+    <section class="panel" id="py-library">
+      <div class="card">
+        <h2>📖 Thư viện ý nghĩa Pythagoras</h2>
+        <h3 class="section-title">Số 1-9 và Master 11, 22, 33</h3>
+        <div class="number-list" id="py-number-library"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ============== CHALDEAN APP ============== -->
+  <div id="app-chaldean" class="school-section">
+    <div class="app-bar">
+      <div class="school-info">
+        <span class="icon" style="--accent:var(--orange);color:var(--orange)">☉</span>
+        <div><div class="name">Chaldean (Babylon cổ đại)</div><div class="sub">Hệ rung động âm thanh - 4000 năm</div></div>
+      </div>
+      <button class="back-btn" onclick="goBack()">← Đổi trường phái</button>
+    </div>
+    <nav class="tabs">
+      <button class="tab active" data-tab="ch-profile" data-school="ch">Hồ sơ</button>
+      <button class="tab" data-tab="ch-library" data-school="ch">Thư viện 1-9</button>
+      <button class="tab" data-tab="ch-compound" data-school="ch">Compound Numbers</button>
+    </nav>
+    <section class="panel active" id="ch-profile">
+      <div class="card">
+        <h2>☉ Nhập thông tin</h2>
+        <div class="form-row">
+          <div class="field"><label>Họ và tên đầy đủ</label><input type="text" id="ch-name" placeholder="Ví dụ: Nguyễn Văn An"></div>
+          <div class="field"><label>Ngày sinh dương lịch</label><input type="date" id="ch-dob"></div>
+          <button class="cta" onclick="calcChaldean()">Xem kết quả</button>
+        </div>
+        <div class="info-box">
+          <strong>Đặc điểm Chaldean:</strong> Bảng chữ cái không theo thứ tự ABC mà theo rung động âm thanh: A,I,J,Q,Y=1 · B,K,R=2 · C,G,L,S=3 · D,M,T=4 · E,H,N,X=5 · U,V,W=6 · O,Z=7 · F,P=8 · (số 9 không có chữ cái nào).
+        </div>
+        <div id="ch-results" class="results"></div>
+      </div>
+    </section>
+    <section class="panel" id="ch-library">
+      <div class="card">
+        <h2>📖 Ý nghĩa số 1-9 (Chaldean)</h2>
+        <div class="number-list" id="ch-number-library"></div>
+      </div>
+    </section>
+    <section class="panel" id="ch-compound">
+      <div class="card">
+        <h2>🔢 Compound Numbers (Số Ghép)</h2>
+        <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:14px;">Trong Chaldean, các số 10-52 (không rút gọn) có ý nghĩa riêng và là phần quan trọng nhất. Mỗi số ghép mô tả "spiritual essence" của tên.</p>
+        <div class="number-list" id="ch-compound-library"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ============== KABBALAH APP ============== -->
+  <div id="app-kabbalah" class="school-section">
+    <div class="app-bar">
+      <div class="school-info">
+        <span class="icon" style="--accent:var(--purple);color:var(--purple)">✡</span>
+        <div><div class="name">Kabbalah (Do Thái)</div><div class="sub">22 đường năng lượng Tree of Life</div></div>
+      </div>
+      <button class="back-btn" onclick="goBack()">← Đổi trường phái</button>
+    </div>
+    <nav class="tabs">
+      <button class="tab active" data-tab="kb-profile" data-school="kb">Phân tích tên</button>
+      <button class="tab" data-tab="kb-library" data-school="kb">22 Paths</button>
+    </nav>
+    <section class="panel active" id="kb-profile">
+      <div class="card">
+        <h2>✡ Phân tích tên Kabbalah</h2>
+        <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:12px;">Kabbalah cổ điển <strong>chỉ phân tích tên</strong> - không tính ngày sinh. Kết quả là 1 trong 22 Path tương ứng 22 chữ Hebrew và 22 lá Tarot Major Arcana.</p>
+        <div class="form-row">
+          <div class="field"><label>Họ và tên đầy đủ</label><input type="text" id="kb-name" placeholder="Ví dụ: Nguyễn Văn An"></div>
+          <button class="cta" onclick="calcKabbalah()">Xem kết quả</button>
+        </div>
+        <div class="info-box">
+          <strong>Cách tính:</strong> Mỗi chữ cái có giá trị Hebrew (A=1, B=2... J=10, K=20... S=100). Tổng tất cả → mod 22. Kết quả từ 1-22 ứng với một Path.
+        </div>
+        <div id="kb-results" class="results"></div>
+      </div>
+    </section>
+    <section class="panel" id="kb-library">
+      <div class="card">
+        <h2>📖 22 Paths của Cây Sự Sống</h2>
+        <div class="number-list" id="kb-path-library"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ============== VEDIC APP ============== -->
+  <div id="app-vedic" class="school-section">
+    <div class="app-bar">
+      <div class="school-info">
+        <span class="icon" style="--accent:var(--blue);color:var(--blue)">☸</span>
+        <div><div class="name">Vệ Đà (Ấn Độ)</div><div class="sub">9 hành tinh - Vedic Numerology</div></div>
+      </div>
+      <button class="back-btn" onclick="goBack()">← Đổi trường phái</button>
+    </div>
+    <nav class="tabs">
+      <button class="tab active" data-tab="vd-profile" data-school="vd">Hồ sơ Vệ Đà</button>
+      <button class="tab" data-tab="vd-library" data-school="vd">9 Hành tinh</button>
+    </nav>
+    <section class="panel active" id="vd-profile">
+      <div class="card">
+        <h2>☸ Nhập thông tin</h2>
+        <div class="form-row">
+          <div class="field"><label>Họ và tên đầy đủ</label><input type="text" id="vd-name" placeholder="Ví dụ: Nguyễn Văn An"></div>
+          <div class="field"><label>Ngày sinh dương lịch</label><input type="date" id="vd-dob"></div>
+          <button class="cta" onclick="calcVedic()">Xem kết quả</button>
+        </div>
+        <div class="info-box">
+          <strong>3 chỉ số chính của Vệ Đà:</strong><br>
+          • <strong>Mulank/Tâm số</strong>: ngày sinh (1-31), rút gọn về 1-9 — bản chất bẩm sinh<br>
+          • <strong>Bhagyank/Số mệnh</strong>: tổng ngày-tháng-năm sinh — số phận, định mệnh<br>
+          • <strong>Namank/Số tên</strong>: tổng chữ cái tên — ấn tượng xã hội
+        </div>
+        <div id="vd-results" class="results"></div>
+      </div>
+    </section>
+    <section class="panel" id="vd-library">
+      <div class="card">
+        <h2>🪐 9 Hành tinh trong Vệ Đà</h2>
+        <div class="number-list" id="vd-planet-library"></div>
+      </div>
+    </section>
+  </div>
+
+  <footer>
+    <p>✦ Thần số học chỉ mang tính tham khảo - không thay thế quyết định cá nhân ✦</p>
+  </footer>
+</div>
+
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <button class="close" onclick="closeModal()">×</button>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+/* ==================== SCHOOL ROUTING ==================== */
+function selectSchool(school) {
+  document.querySelectorAll('.school-section').forEach(s => s.classList.remove('active'));
+  document.getElementById('app-' + school).classList.add('active');
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+function goBack() {
+  document.querySelectorAll('.school-section').forEach(s => s.classList.remove('active'));
+  document.getElementById('selector').classList.add('active');
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+document.querySelectorAll('.tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const school = btn.dataset.school;
+    document.querySelectorAll(`.tab[data-school="${school}"]`).forEach(b => b.classList.remove('active'));
+    document.querySelectorAll(`#app-${schoolFullName(school)} .panel`).forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
+  });
+});
+function schoolFullName(s) { return {py:'pythagoras',ch:'chaldean',kb:'kabbalah',vd:'vedic'}[s]; }
+
+/* ==================== UTILITIES ==================== */
+function normalizeVN(str) { return str.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toUpperCase(); }
+function digitSum(n) { return String(n).split('').reduce((s, c) => s + (parseInt(c) || 0), 0); }
+function reduceFlat(n) { n = Math.abs(n); while (n > 9) n = digitSum(n); return n; }
+
+/* ==================== PYTHAGORAS ENGINE ==================== */
+const PY_LETTER = { A:1,B:2,C:3,D:4,E:5,F:6,G:7,H:8,I:9, J:1,K:2,L:3,M:4,N:5,O:6,P:7,Q:8,R:9, S:1,T:2,U:3,V:4,W:5,X:6,Y:7,Z:8 };
+const PY_VOWELS = new Set(['A','E','I','O','U']);
+const PY_MASTER = new Set([11, 22, 33]);
+const PY_KD = [13, 14, 16, 19];
+
+function pyReduce(n) { n = Math.abs(n); while (n > 9) { if (PY_MASTER.has(n)) return n; n = digitSum(n); } return n; }
+function pyReduceWithKD(n) {
+  n = Math.abs(n);
+  if (n <= 9 || PY_MASTER.has(n)) return { value: n, kd: null };
+  let kd = null;
+  while (n > 9 && !PY_MASTER.has(n)) { if (PY_KD.includes(n)) kd = n; n = digitSum(n); }
+  if (PY_MASTER.has(n)) return { value: n, kd: null };
+  return { value: n, kd };
+}
+function pyNameLetters(name) { return normalizeVN(name).replace(/[^A-Z\s]/g, ''); }
+function isYVowelPy(name, idx) {
+  const c = name[idx]; if (c !== 'Y') return false;
+  const prev = name[idx-1], next = name[idx+1];
+  if ((!prev || prev === ' ') && next && PY_VOWELS.has(next)) return false;
+  return true;
+}
+function pyExpression(name) { let s = 0; for (const c of pyNameLetters(name)) if (PY_LETTER[c]) s += PY_LETTER[c]; return pyReduceWithKD(s); }
+function pySoul(name) {
+  const n = pyNameLetters(name); let s = 0;
+  for (let i=0;i<n.length;i++) { const c = n[i]; if (!PY_LETTER[c]) continue; if (PY_VOWELS.has(c) || isYVowelPy(n,i)) s += PY_LETTER[c]; }
+  return pyReduceWithKD(s);
+}
+function pyPersonality(name) {
+  const n = pyNameLetters(name); let s = 0;
+  for (let i=0;i<n.length;i++) { const c = n[i]; if (!PY_LETTER[c]) continue; if (!PY_VOWELS.has(c) && !isYVowelPy(n,i)) s += PY_LETTER[c]; }
+  return pyReduceWithKD(s);
+}
+function pyLifePath(d, m, y) { return pyReduceWithKD(pyReduce(d) + pyReduce(m) + pyReduce(y)); }
+
+/* ==================== PYTHAGORAS DATA ==================== */
+const PY_NUMBERS = {
+  1: { archetype: "ĐỘC LẬP - LÃNH ĐẠO - QUYẾT LIỆT", title: "Người Tiên Phong", short: "Lãnh đạo, độc lập, quyết đoán", keywords: ["Độc lập","Lãnh đạo","Tiên phong"], famous: [{name:"Steve Jobs",role:"Sáng lập Apple"},{name:"Phạm Nhật Vượng",role:"VinGroup"}] },
+  2: { archetype: "LẮNG NGHE - KẾT NỐI - YÊU THƯƠNG", title: "Người Hòa Giải", short: "Kết nối, đồng cảm, hòa bình", keywords: ["Hòa giải","Kết nối","Trực giác"], famous: [{name:"Barack Obama",role:"Tổng thống Mỹ"},{name:"Joe Biden",role:"Tổng thống Mỹ"}] },
+  3: { archetype: "HOẠT NGÔN - NĂNG LƯỢNG CAO", title: "Người Truyền Cảm Hứng", short: "Giao tiếp, sáng tạo, lạc quan", keywords: ["Hoạt ngôn","Sáng tạo","Vui vẻ"], famous: [{name:"Jack Ma",role:"Alibaba"},{name:"Hillary Clinton",role:"Cựu Ngoại trưởng Mỹ"}] },
+  4: { archetype: "LOGIC - CHẮC CHẮN - QUY TRÌNH", title: "Người Xây Dựng", short: "Kỷ luật, đáng tin, chuyên gia", keywords: ["Kỷ luật","Logic","Chuyên gia"], famous: [{name:"Bill Gates",role:"Microsoft"},{name:"Donald Trump",role:"Tổng thống Mỹ"}] },
+  5: { archetype: "TỰ DO - SÁNG TẠO - TRẢI NGHIỆM", title: "Người Phiêu Lưu", short: "Tự do, đa tài, trải nghiệm", keywords: ["Tự do","Sáng tạo","Linh hoạt"], famous: [{name:"Mark Zuckerberg",role:"Facebook"},{name:"Angelina Jolie",role:"Diễn viên"}] },
+  6: { archetype: "GIA ĐÌNH - TÌNH YÊU - CHĂM SÓC", title: "Người Chăm Sóc", short: "Tận tụy, bao dung, gia đình", keywords: ["Yêu thương","Gia đình","Chăm sóc"], famous: [{name:"Hồ Chí Minh",role:"Chủ tịch nước"},{name:"Einstein",role:"Vật lý"},{name:"Warren Buffett",role:"Đầu tư"}] },
+  7: { archetype: "TRÍ TUỆ - TÂM LINH - CHIẾN LƯỢC", title: "Người Khai Sáng", short: "Trí tuệ, nội tâm, chiến lược", keywords: ["Trí tuệ","Tâm linh","Chiến lược"], famous: [{name:"Elon Musk",role:"Tesla, SpaceX"},{name:"John C. Maxwell",role:"Lãnh đạo"}] },
+  8: { archetype: "KINH DOANH - TÀI CHÍNH - ĐIỀU HÀNH", title: "Người Quyền Lực", short: "Kinh doanh, tài chính, điều hành", keywords: ["Kinh doanh","Quyền lực","Tài chính"], famous: [{name:"Howard Schultz",role:"Starbucks"},{name:"Zig Ziglar",role:"Diễn giả"}] },
+  9: { archetype: "TỪ BI - TRÍ TUỆ - KHAI SÁNG", title: "Người Khai Tâm", short: "Nhân ái, lý tưởng, thủ lĩnh tinh thần", keywords: ["Từ bi","Nhân đạo","Phụng sự"], famous: [{name:"Mẹ Teresa",role:"Nữ tu nhân đạo"},{name:"Mahatma Gandhi",role:"Lãnh tụ Ấn Độ"}] },
+  11: { archetype: "MASTER - SOI SÁNG - TRUYỀN CẢM HỨNG VĨ ĐẠI", title: "Người Khai Sáng (Master)", short: "Trực giác mạnh, kết hợp 1+2", keywords: ["Trực giác","Lãnh đạo","Tâm linh"], famous: [{name:"Người dẫn dắt phong trào",role:"Tầm vĩ mô"}] },
+  22: { archetype: "MASTER - KIẾN TẠO VĨ ĐẠI", title: "Kiến Trúc Sư Bậc Thầy", short: "Tầm nhìn lớn + thực thi, kết hợp 2+4", keywords: ["Kiến tạo","Thực thi","Tầm nhìn"], famous: [{name:"Người sáng lập tổ chức lớn",role:"Tầm toàn cầu"}] },
+  33: { archetype: "MASTER - CHỮA LÀNH BẰNG TÌNH YÊU", title: "Người Thầy Của Tình Yêu", short: "Phụng sự nhân loại, kết hợp 3+6", keywords: ["Chữa lành","Phụng sự","Tình yêu"], famous: [{name:"Bậc thầy chữa lành",role:"Cực kỳ hiếm"}] }
+};
+// Reuse rich content from previous version (Pythagoras has full data)
+const PY_RICH = {
+  1: { standard:["Độc lập, tự chủ","Tiên phong, dám làm","Mạnh mẽ, quyết liệt","Năng lực lãnh đạo tốt","Tính mục tiêu cao","Quyết đoán, có chính kiến","Có trách nhiệm, tinh thần gánh vác","Lý trí, nghị lực, kiên trì"], reverse:["Phụ thuộc, đổ lỗi","Né tránh trách nhiệm","Yếu đuối, tự ti, thụ động","Không có mục tiêu","Nhu nhược, do dự"], excess:["Kiêu căng, hiếu thắng","Ích kỷ","Thiếu kiên nhẫn","Nóng tính, gia trưởng","Liều lĩnh, thích chiếm hữu"], levels:["Sống phụ thuộc, vật vờ, đổ lỗi - gánh nặng xã hội","Người tầm thường, làm công ăn lương, an phận","Có mục tiêu, thành tích tốt, có chức vụ quản lý","Lãnh đạo từ 1000 người, chủ doanh nghiệp","Lãnh đạo xuất chúng, mang giá trị tiên phong","Bậc vĩ nhân tạo giá trị trường tồn"], graduate:"Trở thành Nhà Lãnh đạo", quotes:[{text:"Đổi mới là điều kiện tạo ra sự khác biệt giữa người lãnh đạo và kẻ phục tùng",author:"Steve Jobs"}] },
+  2: { standard:["Kết nối, tình cảm","Hỗ trợ, lắng nghe","Tinh tế, trực giác nhạy bén","Hòa bình, hàn gắn","Tâm sáng"], reverse:["Lạnh lùng, vô cảm","Không thích kết nối","Đố kỵ, ghê gớm","Gian dối, cứng đầu"], excess:["Suy diễn, ủy mị, đa sầu đa cảm","Yếu đuối, dễ bị tác động","Do dự","Không kiểm soát cảm xúc","Dễ đau khổ trong tình cảm"], levels:["Ích kỷ, lạnh lùng, thù lâu nhớ dai","Yếu đuối, ủy mị, không dám nói chính kiến","Thích giúp đỡ, kết nối khéo léo","Năng lực kết nối ngoại giao xuất sắc, chữa lành","Kết nối hòa giải tầm vĩ mô","Nhà ngoại giao kiệt xuất"], graduate:"Học cách xây dựng mối quan hệ chất lượng. Mang lại yêu thương, hòa bình.", quotes:[{text:"Cách đối xử với nhau hoàn toàn phụ thuộc vào chúng ta",author:"Barack Obama"}] },
+  3: { standard:["Hoạt ngôn, hùng biện","Năng lượng cao, lạc quan","Thông minh, nhanh nhạy","Sáng tạo, nghệ thuật","Tự tin, gây ảnh hưởng"], reverse:["Ít nói, ngại giao tiếp","Tiêu cực, bi quan","Tự ti, khép kín","Sống lu mờ"], excess:["Nói nhiều, lan man","Khoe khoang, lấn át","Nóng tính","Cả thèm chóng chán"], levels:["Tiêu cực, sợ giao tiếp, ù lì","Vui vẻ nhưng thiếu kiểm soát lời nói","Giao tiếp tốt, bán hàng tốt","Diễn thuyết, đào tạo, nghệ sĩ xuất sắc","Lãnh đạo có tầm ảnh hưởng lớn","Ngọn lửa vĩnh hằng cho hàng triệu người"], graduate:"Trở thành người truyền cảm hứng và năng lượng tích cực.", quotes:[{text:"Lời nói tạo ra giấc mơ để ai đó có thể hành động",author:"Jim Rohn"}] },
+  4: { standard:["Chắc chắn, đáng tin","Logic, kỷ luật","Chỉn chu, cẩn thận","Chăm chỉ, tỉ mỉ","Trụ cột, trách nhiệm cao"], reverse:["Ham chơi, thiếu kỷ luật","Cẩu thả, bừa bộn","Bốc đồng","Thiếu chung thủy"], excess:["Cứng nhắc, bảo thủ","Áp đặt, khắt khe","Ki bo","Khô khan, hay nghi ngờ","Quá an toàn, mất cơ hội"], levels:["Vô kỷ luật, ăn chơi trác táng","Việc lặp lại, an toàn, sợ thay đổi","Có kỷ luật, chuyên môn, thu nhập khá","Chuyên gia, lãnh đạo bằng chuyên môn","Nhà kinh doanh tài ba","Tạo công trình trường tồn"], graduate:"Trở thành chuyên gia trong một lĩnh vực, để lại di sản.", quotes:[{text:"Sự kiên trì chính là khác biệt lớn nhất giữa thành công và thất bại",author:"Donald Trump"}] },
+  5: { standard:["Sáng tạo, đa tài","Khao khát tự do","Năng lượng tích cực","Linh hoạt, ứng biến","Bán hàng tốt","Diễn thuyết"], reverse:["Sợ cái mới","Chấp nhận bị kiểm soát","Khó thích nghi","Sống khép kín","Ki bo"], excess:["Ảo tưởng","Hoang phí, phô trương","Ham vui, dễ nhiễm thói xấu","Cả thèm chóng chán","Lời nói gió bay","Đứng núi này trông núi nọ"], levels:["Ăn chơi sa đọa, dựa dẫm","Bấp bênh, hay nhảy việc","Kinh doanh tốt, nhạy bén cơ hội","Lãnh đạo xuất sắc, kỷ luật, tu tập","Quy tụ nguồn lực, vì cộng đồng","Đưa ra giải pháp cải cách cho thế giới"], graduate:"Trở thành nhà cải cách, tạo giá trị sáng tạo cho cộng đồng.", quotes:[{text:"Rủi ro lớn nhất là không dám chấp nhận rủi ro nào",author:"Mark Zuckerberg"}] },
+  6: { standard:["Yêu thương, chăm sóc","Giàu nhân ái, hy sinh","Cảm thông, bao dung","Nhẹ nhàng, ôn hòa","Vị tha, chữa lành","Sẵn sàng cho đi"], reverse:["Ích kỷ, vô tâm","Nóng tính, bảo thủ","Tính toán","Thiếu trách nhiệm"], excess:["Ôm đồm, kiểm soát","Bị cảm xúc chi phối","Lo xa","Nhẫn nhục quá"], levels:["Ích kỷ, nhỏ nhen, vô tâm","Tốt bụng nhưng hay càm ràm","Biết giúp người khác sống tốt hơn","Cân bằng công việc và con người","Hy sinh lợi ích cá nhân","Hiện thân câu chuyện truyền cảm hứng"], graduate:"Học cách bao dung, che chở, yêu thương vô điều kiện.", quotes:[{text:"Bóng mát hôm nay bạn ngồi nhờ cái cây đã trồng từ rất lâu",author:"Warren Buffett"},{text:"Tôi chỉ có một sự ham muốn tột bậc: nước nhà độc lập, đồng bào ai cũng có cơm ăn áo mặc",author:"Hồ Chí Minh"}] },
+  7: { standard:["Trí tuệ, logic, ham học","Trực giác mạnh, tâm linh cao","Tầm nhìn, chiến lược","Tiêu chuẩn cao, tập trung","Nhìn nguyên nhân gốc rễ","Nghị lực, bền bỉ"], reverse:["Lười học, thụ động","Tiêu chuẩn thấp","Không kỷ luật","Sống trái đạo đức"], excess:["Cái tôi cao, kiêu căng","Bảo thủ, tham vọng quá","Bỏ qua chi tiết","Chỉ trích, đa nghi","Nghiện cô đơn"], levels:["Cả tin, dễ bị lừa, không mục tiêu","Ý thức học nhưng nhiều suy nghĩ tiêu cực","Thông minh nổi bật, cố vấn cho tổ chức","Lãnh đạo uy tín, hình mẫu học tập","Trí tuệ xuất chúng, nắm quy luật vũ trụ","Ngọn hải đăng soi sáng nhân loại"], graduate:"Trở thành chiến lược gia khai sáng, trái tim đủ lớn, cái tôi đủ nhỏ.", quotes:[{text:"Nếu bạn muốn thành công ở lĩnh vực nào, hãy học bằng tất cả sự ám ảnh",author:"Elon Musk"}] },
+  8: { standard:["Linh hoạt, năng lượng cao","Quyết liệt, chú trọng kết quả","Bán hàng đỉnh cao","Gu thẩm mỹ, thương hiệu","Gia tăng giá trị","Tham vọng cao","Rõ ràng tài chính"], reverse:["Không thích kinh doanh","An phận, dựa dẫm","Lươn lẹo, mập mờ","Tiêu cực, cẩu thả","Do dự về tài chính"], excess:["Tham lam, thực dụng","Hoang phí, làm màu","Bất chấp, liều lĩnh","Dễ tự ái","Phô trương"], levels:["An phận, niềm tin sai về tiền","Có ý thức kiếm tiền nhưng cảm xúc thất thường","Có phương pháp, thu nhập khá, vị trí lãnh đạo","Lãnh đạo, xây mô hình kinh doanh","Lãnh đạo tập đoàn, hiểu ý nghĩa kinh doanh","Tạo công trình di sản, dùng tiền giúp đời"], graduate:"Người chuyển hóa và điều hành xuất sắc. Quản trị tài chính.", quotes:[{text:"Nếu bạn học được từ thất bại, bạn chưa thật sự thua cuộc",author:"Zig Ziglar"}] },
+  9: { standard:["Từ bi, giàu lòng trắc ẩn","Trách nhiệm cao, hào phóng","Khai tâm, khai tuệ","Cảm thông, nhân văn","Tinh thần thủ lĩnh","Quy tụ tinh hoa"], reverse:["Vô tâm, vô trách nhiệm","Phán xét, chỉ trích","Cọc cằn, thô lỗ","Thực dụng","Cẩu thả, không tin tâm linh"], excess:["Quá kỹ tính, cầu toàn","Ăn cơm nhà vác tù và","Dễ bị lợi dụng","Bay bổng, thiếu thực tế","Ôm đồm, quên bản thân","Cả nể"], levels:["Ích kỷ, sống trong môi trường thiếu sẻ chia","Công dân tốt, an phận, không tham vọng","Tỉnh thức, làm việc nhân văn","Thủ lĩnh tinh thần, đào tạo tư duy","Lãnh đạo cấp cao, cải cách giáo dục","Vĩ nhân, được phong thánh"], graduate:"Thủ lĩnh tinh thần khai tâm khai tuệ. Phụng sự để dẫn đầu.", quotes:[{text:"Hãy là sự thay đổi mà bạn muốn nhìn thấy ở thế giới",author:"Mahatma Gandhi"},{text:"Đừng để ai đi qua đời mình mà không hạnh phúc hơn ngày hôm qua",author:"Mẹ Teresa"}] },
+  11: { standard:["Truyền cảm hứng, sức thu hút đặc biệt","Lãnh đạo + kết nối","Trực giác cực mạnh","Tầm nhìn bao quát","Năng lực ngoại giao"], reverse:["Thụ động, phụ thuộc","Do dự, không chính kiến","Cô lập"], excess:["Kiêu ngạo, hiếu thắng","Đa sầu đa cảm","Thiếu mục tiêu"], levels:["Yếu đuối kiểu số 2","Có khả năng tâm linh chưa khai thác","Trực giác mạnh, được nhiều người tìm đến","Lãnh đạo tinh thần","Soi đường cho cộng đồng lớn","Bậc thầy khai sáng vĩ đại"], graduate:"Người khai sáng và truyền cảm hứng vĩ đại. Tốt nghiệp bài học của số 1 và 2.", quotes:[{text:"Áp lực số 11 trở thành món quà khi bạn dám đứng lên ánh sáng",author:""}] },
+  22: { standard:["Kỷ luật + năng lực thực thi","Kiến tạo giải pháp độc đáo","Trực giác tốt + thực tế","Tầm nhìn lớn","Phân tích cơ hội xuất sắc"], reverse:["Thiếu kỷ luật","Ham chơi","Cô lập, không kết nối"], excess:["Đa sầu đa cảm","Thất thường","Cứng nhắc, đa nghi"], levels:["Rút về số 4 (lao động không tầm nhìn)","Khả năng thực thi tốt","Chuyên gia có tâm linh","Lãnh đạo dự án lớn","Hệ thống ảnh hưởng quốc tế","Bậc thầy kiến tạo trường tồn"], graduate:"Người kiến tạo vĩ đại. Tốt nghiệp bài học số 2 và 4.", quotes:[{text:"Đừng sợ giấc mơ vĩ đại — bạn sinh ra để xây di sản",author:""}] },
+  33: { standard:["Mục đích sống cao đẹp","Lòng bao dung, chăm sóc","Sáng tạo nghệ thuật","Duyên dáng, thu hút","Giao tiếp tốt"], reverse:["Thiếu khả năng giao tiếp","Tiêu cực","Ích kỷ, vô tâm"], excess:["Khoa trương, lấn át","Quá cả nể, nhẫn nhịn"], levels:["Rút về số 6 (chuyện nhỏ)","Người chăm sóc gia đình","Chữa lành cho cộng đồng nhỏ","Người thầy ảnh hưởng tâm linh","Lãnh đạo phong trào nhân ái","Bậc thầy chữa lành cho hàng triệu"], graduate:"Người chữa lành mang tình yêu thương cho thế giới. Số cực hiếm.", quotes:[{text:"Tình yêu là phép lạ. Tự đổ đầy ly trước khi rót cho người khác",author:""}] }
+};
+const PY_KARMIC_DEBT = {
+  13: "Bài học về lười biếng kiếp trước. Kiếp này phải làm việc cực kỳ chăm chỉ, có tổ chức. Không có đường tắt — sức bền phi thường nếu không bỏ cuộc.",
+  14: "Lạm dụng tự do kiếp trước. Kiếp này dễ gặp cám dỗ rượu/thuốc/tình dục. Học kỷ luật để biến tự do thành sức mạnh.",
+  16: "Kiêu ngạo kiếp trước. Kiếp này gặp 'cú sốc lớn' — đổ vỡ đột ngột — buộc nhìn lại. Thức tỉnh tâm linh: buông cái tôi cũ.",
+  19: "Lạm dụng quyền lực kiếp trước. Kiếp này tự xoay xở một mình, học độc lập đúng nghĩa. Khi tỉnh ngộ trở thành lãnh đạo thật sự."
+};
+
+/* ==================== CHALDEAN ENGINE ==================== */
+const CH_LETTER = {
+  A:1, I:1, J:1, Q:1, Y:1,
+  B:2, K:2, R:2,
+  C:3, G:3, L:3, S:3,
+  D:4, M:4, T:4,
+  E:5, H:5, N:5, X:5,
+  U:6, V:6, W:6,
+  O:7, Z:7,
+  F:8, P:8
+  // No 9 in Chaldean - it appears only in totals
+};
+const CH_VOWELS = new Set(['A','E','I','O','U']);
+
+function chSum(name) {
+  let s = 0;
+  for (const c of normalizeVN(name).replace(/[^A-Z]/g,'')) if (CH_LETTER[c]) s += CH_LETTER[c];
+  return s;
+}
+function chSumVowels(name) {
+  let s = 0;
+  for (const c of normalizeVN(name).replace(/[^A-Z]/g,'')) if (CH_LETTER[c] && CH_VOWELS.has(c)) s += CH_LETTER[c];
+  return s;
+}
+function chSumConsonants(name) {
+  let s = 0;
+  for (const c of normalizeVN(name).replace(/[^A-Z]/g,'')) if (CH_LETTER[c] && !CH_VOWELS.has(c)) s += CH_LETTER[c];
+  return s;
+}
+
+const CH_NUMBERS = {
+  1: { title: "Mặt Trời", short: "Tham vọng, sáng tạo, khởi đầu", desc: "Số của Mặt Trời - ý chí cá nhân, lãnh đạo, tham vọng cao. Người số 1 trong Chaldean rất sáng tạo, có sức ảnh hưởng nhưng cần cẩn thận với cái tôi quá lớn." },
+  2: { title: "Mặt Trăng", short: "Trực giác, hợp tác, nhạy cảm", desc: "Số của Mặt Trăng - cảm xúc, trực giác, khả năng hợp tác. Nhạy cảm, hay thay đổi tâm trạng, nhưng có khả năng đọc người và hòa giải tốt." },
+  3: { title: "Sao Mộc", short: "Khôn ngoan, may mắn, kỷ luật", desc: "Số của Sao Mộc - trí tuệ, may mắn, lạc quan. Người số 3 thường có nhiều cơ hội tốt, có khả năng giảng dạy, nhưng cần kỷ luật để không phung phí tài năng." },
+  4: { title: "Rahu (Uranus)", short: "Đột phá, độc đáo, không truyền thống", desc: "Số của Rahu/Uranus - đặc biệt khác biệt, đột phá. Người số 4 Chaldean RẤT KHÁC số 4 Pythagoras: họ là những kẻ phá vỡ quy tắc, sống cuộc đời đầy biến động và nghịch lý." },
+  5: { title: "Sao Thủy", short: "Linh hoạt, thông minh, giao tiếp", desc: "Số của Sao Thủy - trí tuệ nhanh, giao tiếp, kinh doanh. Người số 5 thông minh, đa năng, kiếm tiền giỏi qua giao tiếp và mạng lưới quan hệ." },
+  6: { title: "Sao Kim", short: "Yêu thương, sắc đẹp, nghệ thuật", desc: "Số của Sao Kim - yêu thương, sắc đẹp, nghệ thuật. Người số 6 có sức thu hút mạnh, gu thẩm mỹ tinh tế, hấp dẫn về mặt lãng mạn." },
+  7: { title: "Ketu (Neptune)", short: "Tâm linh, bí ẩn, độc lập", desc: "Số của Ketu/Neptune - tâm linh, bí ẩn, độc lập. Người số 7 thường ưa cô độc, có trực giác siêu phàm, thích các chủ đề huyền bí và triết học." },
+  8: { title: "Sao Thổ", short: "Karma, kỷ luật, công lý", desc: "Số CỰC KỲ MẠNH trong Chaldean - số của Saturn/Karma. Người số 8 hoặc rất thành công hoặc rất khổ — không có ở giữa. Bài học karma rất rõ, đòi hỏi trách nhiệm và kỷ luật cao." },
+  9: { title: "Sao Hỏa", short: "Hành động, dũng cảm, chiến đấu", desc: "Số của Sao Hỏa - chiến binh, dũng cảm, hành động. KHÔNG có chữ cái nào trong Chaldean được gán số 9, nó chỉ xuất hiện trong tổng. Người số 9 mạnh mẽ, đôi khi nóng nảy, là người chiến đấu cho lý tưởng." }
+};
+
+// Compound numbers - GHI CHÚ ĐẶC BIỆT của Chaldean
+const CH_COMPOUND = {
+  10: { title: "10 - Bánh Xe Vận Mệnh", desc: "May mắn, danh dự, thăng tiến. Nhưng phải dùng đúng — bánh xe có thể quay ngược.", reduces: 1 },
+  11: { title: "11 - Bàn Tay Sư Tử", desc: "Cảnh báo về kẻ thù dấu mặt, sự phản bội. Đòi hỏi sức mạnh tâm hồn để vượt qua thử thách.", reduces: 2 },
+  12: { title: "12 - Hy Sinh", desc: "Bài học về sự hy sinh, cần thận trọng với những lời hứa và mưu mô của người khác.", reduces: 3 },
+  13: { title: "13 - Sự Thay Đổi (Death)", desc: "KHÔNG phải số xui như mê tín — đây là số của sự thay đổi sâu sắc. Cần sẵn sàng từ bỏ cái cũ. Sức mạnh tinh thần lớn.", reduces: 4 },
+  14: { title: "14 - Sự Chuyển Động", desc: "Du lịch, kinh doanh, cờ bạc. Cẩn thận với hợp đồng. Cảnh báo về lực lượng thiên nhiên.", reduces: 5 },
+  15: { title: "15 - Phép Thuật", desc: "Sức quyến rũ phi thường, may mắn về tài chính, năng lực thuyết phục cao. Có yếu tố huyền bí.", reduces: 6 },
+  16: { title: "16 - Tháp Sét Đánh", desc: "Cảnh báo: tai nạn bất ngờ, đổ vỡ. Cần khiêm tốn và chuẩn bị tinh thần. Không phải con số tốt.", reduces: 7 },
+  17: { title: "17 - Ngôi Sao Vĩ Đại", desc: "Số rất tốt: bất tử, danh tiếng để lại. Người số 17 vượt qua mọi khó khăn nhờ tâm linh.", reduces: 8 },
+  18: { title: "18 - Mặt Trăng Lừa Dối", desc: "Cẩn thận với phản bội, lừa lọc, kiện tụng. Số phức tạp, nhiều thử thách vật chất và tinh thần.", reduces: 9 },
+  19: { title: "19 - Hoàng Tử Bầu Trời", desc: "Số TUYỆT VỜI: hạnh phúc, thành công, danh dự. Được coi là một trong những số may mắn nhất Chaldean.", reduces: 1 },
+  20: { title: "20 - Sự Thức Tỉnh", desc: "Lời gọi hành động, sự đánh giá lại. Cần nghe theo trực giác và sứ mệnh tâm linh.", reduces: 2 },
+  21: { title: "21 - Vũ Trụ", desc: "Số CỰC TỐT: vương miện thành công, chiến thắng sau khó khăn dài. Đỉnh cao của thành tựu.", reduces: 3 },
+  22: { title: "22 - Người Đàn Ông Mù", desc: "Cảnh báo: sống ảo tưởng, đánh giá sai về bản thân. Cần thực tế, không bị ảo ảnh đánh lừa.", reduces: 4 },
+  23: { title: "23 - Sao Kim Hoàng Gia", desc: "Một trong những số TỐT NHẤT Chaldean. Hỗ trợ từ cấp trên, may mắn lớn trong sự nghiệp.", reduces: 5 },
+  24: { title: "24 - Tình Yêu Hoàng Gia", desc: "Hỗ trợ từ người có quyền lực, hạnh phúc tình yêu, thăng tiến qua mối quan hệ.", reduces: 6 },
+  25: { title: "25 - Quan Sát & Học Hỏi", desc: "Trí tuệ qua thử thách. Thành công đến sau giai đoạn khó khăn. Cần trải nghiệm để khôn ngoan.", reduces: 7 },
+  26: { title: "26 - Đối Tác Sai Lầm", desc: "Cảnh báo về đầu tư, đối tác kinh doanh. Dễ thất bại nếu tin nhầm người. Tránh rủi ro tài chính.", reduces: 8 },
+  27: { title: "27 - Quyền Trượng", desc: "Sức mạnh, quyền uy, tâm trí phi thường. Số rất tốt cho người có lý tưởng cao.", reduces: 9 },
+  28: { title: "28 - Tin Vào Mọi Người", desc: "Cảnh báo: dễ tin lầm, mất tài sản qua kiện tụng. Cần thận trọng với đối tác.", reduces: 1 },
+  29: { title: "29 - Bất Định", desc: "Thử thách, không chắc chắn, cần sự kiên trì phi thường. Nhiều biến động trong cuộc sống.", reduces: 2 },
+  30: { title: "30 - Suy Tư", desc: "Suy ngẫm sâu sắc, ưu thế trí tuệ hơn vật chất. Phù hợp triết học, nghiên cứu.", reduces: 3 },
+  31: { title: "31 - Cô Độc", desc: "Tự lập, thường ẩn dật. Suy nghĩ sâu, khó hòa nhập đám đông. Trí tuệ cao.", reduces: 4 },
+  32: { title: "32 - Quyến Rũ Đám Đông", desc: "Sức hút quần chúng, kết hợp người khác giỏi. Tốt cho lãnh đạo, diễn giả.", reduces: 5 },
+  33: { title: "33 - Như 24", desc: "Tương tự 24 - hỗ trợ từ người có quyền lực, may mắn qua quan hệ.", reduces: 6 },
+  34: { title: "34 - Như 25", desc: "Tương tự 25 - học qua trải nghiệm.", reduces: 7 },
+  35: { title: "35 - Như 26", desc: "Tương tự 26 - cẩn thận đối tác.", reduces: 8 },
+  36: { title: "36 - Như 27", desc: "Tương tự 27 - quyền trượng và sức mạnh.", reduces: 9 }
+};
+
+/* ==================== KABBALAH ENGINE ==================== */
+// Kabbalah modern: A=1...I=9, J=10, K=20...R=90, S=100...Z=800
+const KB_LETTER = {
+  A:1, B:2, C:3, D:4, E:5, F:6, G:7, H:8, I:9,
+  J:10, K:20, L:30, M:40, N:50, O:60, P:70, Q:80, R:90,
+  S:100, T:200, U:300, V:400, W:500, X:600, Y:700, Z:800
+};
+function kbSum(name) {
+  let s = 0;
+  for (const c of normalizeVN(name).replace(/[^A-Z]/g,'')) if (KB_LETTER[c]) s += KB_LETTER[c];
+  return s;
+}
+function kbPath(name) {
+  const total = kbSum(name);
+  const path = total % 22;
+  return { total, path: path === 0 ? 22 : path };
+}
+
+const KB_PATHS = {
+  1: { hebrew: "א", letter: "Aleph", title: "The Magician (Pháp Sư)", desc: "Khởi đầu mới, sức mạnh sáng tạo, ý chí. Bạn là người tiên phong, có khả năng biến ý tưởng thành hiện thực bằng ý chí." },
+  2: { hebrew: "ב", letter: "Beth", title: "The High Priestess (Nữ Tu)", desc: "Trực giác, kiến thức ẩn, sự khôn ngoan thầm lặng. Bạn có khả năng đọc tâm linh và hiểu biết qua trực giác." },
+  3: { hebrew: "ג", letter: "Gimel", title: "The Empress (Hoàng Hậu)", desc: "Tình yêu, sự nuôi dưỡng, sự sáng tạo phong phú. Bạn mang năng lượng của người mẹ - chăm sóc và nuôi dưỡng." },
+  4: { hebrew: "ד", letter: "Daleth", title: "The Emperor (Hoàng Đế)", desc: "Quyền uy, cấu trúc, kỷ luật. Bạn là người xây dựng nền tảng, có năng lực quản lý và lãnh đạo bằng kỷ luật." },
+  5: { hebrew: "ה", letter: "Heh", title: "The Hierophant (Giáo Chủ)", desc: "Truyền thống, giáo dục, đức tin. Bạn là cầu nối giữa thế giới vật chất và tâm linh, người thầy của truyền thống." },
+  6: { hebrew: "ו", letter: "Vav", title: "The Lovers (Cặp Tình Nhân)", desc: "Lựa chọn, mối quan hệ, sự kết hợp. Bài học của bạn là về tình yêu và sự lựa chọn quan trọng trong đời." },
+  7: { hebrew: "ז", letter: "Zayin", title: "The Chariot (Cỗ Xe)", desc: "Chiến thắng, ý chí, sức mạnh. Bạn vượt qua trở ngại bằng ý chí và sự tập trung. Người chiến thắng." },
+  8: { hebrew: "ח", letter: "Cheth", title: "Strength (Sức Mạnh)", desc: "Sức mạnh nội tâm, dũng cảm, kiểm soát. Sức mạnh thật sự đến từ sự dịu dàng - bạn thuần hóa sư tử bằng tình yêu." },
+  9: { hebrew: "ט", letter: "Teth", title: "The Hermit (Ẩn Sĩ)", desc: "Suy ngẫm, tìm kiếm tâm linh, trí tuệ qua cô độc. Bạn là ngọn đèn soi đường cho người khác qua tự khám phá." },
+  10: { hebrew: "י", letter: "Yod", title: "Wheel of Fortune (Bánh Xe Vận Mệnh)", desc: "Chu kỳ cuộc đời, vận may, biến chuyển. Bạn hiểu rằng cuộc sống là chu kỳ - lên và xuống đều có ý nghĩa." },
+  11: { hebrew: "כ", letter: "Kaph", title: "Justice (Công Lý)", desc: "Cân bằng, công lý, nhân quả. Bạn là người mang lại sự công bằng, hiểu sâu về luật nhân quả của vũ trụ." },
+  12: { hebrew: "ל", letter: "Lamed", title: "The Hanged Man (Người Treo Ngược)", desc: "Hy sinh, góc nhìn mới, dừng lại. Bạn học bài học qua sự buông bỏ và nhìn cuộc sống từ góc độ ngược lại." },
+  13: { hebrew: "מ", letter: "Mem", title: "Death (Cái Chết)", desc: "Sự chuyển hóa, kết thúc và bắt đầu mới. KHÔNG phải cái chết theo nghĩa đen - mà là sự thay đổi sâu sắc của linh hồn." },
+  14: { hebrew: "נ", letter: "Nun", title: "Temperance (Tiết Chế)", desc: "Cân bằng, hài hòa, sự kiên nhẫn. Bạn là người chữa lành, mang lại sự cân bằng giữa các thái cực." },
+  15: { hebrew: "ס", letter: "Samekh", title: "The Devil (Quỷ Dữ)", desc: "Cám dỗ, ràng buộc vật chất, cái tôi đen tối. Bài học: nhận ra mình bị xiềng xích bởi gì để giải thoát." },
+  16: { hebrew: "ע", letter: "Ayin", title: "The Tower (Tháp)", desc: "Đột phá, sụp đổ những cấu trúc giả tạo. Cuộc đời bạn có những 'cú sét đánh' để giải phóng bạn khỏi ảo tưởng." },
+  17: { hebrew: "פ", letter: "Peh", title: "The Star (Ngôi Sao)", desc: "Hy vọng, cảm hứng, sự dẫn dắt từ trên cao. Bạn là người mang hy vọng và đức tin cho thế giới." },
+  18: { hebrew: "צ", letter: "Tzaddi", title: "The Moon (Mặt Trăng)", desc: "Vô thức, ảo ảnh, ẩn dụ. Bạn có khả năng đi vào tâm linh sâu, nhưng cần phân biệt thật-giả." },
+  19: { hebrew: "ק", letter: "Qoph", title: "The Sun (Mặt Trời)", desc: "Niềm vui, ánh sáng, thành công. Bạn là người tỏa ánh sáng - mang niềm vui và sự rực rỡ cho người khác." },
+  20: { hebrew: "ר", letter: "Resh", title: "Judgement (Phán Xét)", desc: "Tỉnh thức, đánh giá lại, tái sinh. Bạn nghe được tiếng gọi của linh hồn và sống đúng với sứ mệnh." },
+  21: { hebrew: "ש", letter: "Shin", title: "The World (Thế Giới)", desc: "Hoàn thành, viên mãn, đỉnh cao. Bạn đã đi qua chu kỳ và trở về với sự khôn ngoan trọn vẹn." },
+  22: { hebrew: "ת", letter: "Tav", title: "The Fool (Kẻ Khờ)", desc: "Khởi đầu mới với tinh thần trẻ thơ. Bạn dám nhảy vào cuộc phiêu lưu mới mà không bị giới hạn bởi sợ hãi." }
+};
+
+/* ==================== VEDIC ENGINE ==================== */
+// Vedic uses Pythagoras-like name letter mapping but interpretation through 9 planets
+function vdNameSum(name) {
+  let s = 0;
+  for (const c of normalizeVN(name).replace(/[^A-Z]/g,'')) if (PY_LETTER[c]) s += PY_LETTER[c];
+  return reduceFlat(s);
+}
+function vdMulank(d) { return reduceFlat(d); }
+function vdBhagyank(d, m, y) { return reduceFlat(d + m + y); }
+
+const VD_PLANETS = {
+  1: { name: "Mặt Trời (Surya)", emoji: "☉", title: "Lãnh Đạo Vương Giả", desc: "Người sinh ngày 1, 10, 19, 28 — chịu sự cai quản của Mặt Trời. Lãnh đạo bẩm sinh, tham vọng, sáng tạo, độc lập. Có sức ảnh hưởng và uy quyền tự nhiên. Cần cẩn thận với cái tôi và sự độc đoán.", color: "#ffa94d" },
+  2: { name: "Mặt Trăng (Chandra)", emoji: "☽", title: "Người Nhạy Cảm", desc: "Người sinh ngày 2, 11, 20, 29 — Mặt Trăng cai quản. Nhạy cảm, trực giác, hay thay đổi cảm xúc. Có khả năng đọc người, làm việc tốt với phụ nữ, gia đình. Cần ổn định tâm trạng.", color: "#b8b8d4" },
+  3: { name: "Sao Mộc (Brihaspati/Guru)", emoji: "♃", title: "Bậc Thầy Trí Tuệ", desc: "Người sinh ngày 3, 12, 21, 30 — Guru/Sao Mộc cai quản. Trí tuệ, tinh thần, dạy bảo. May mắn về tri thức và tài chính. Có khả năng giảng dạy, viết lách, triết học. Bài học: kiểm soát sự kiêu ngạo về kiến thức.", color: "#ffd700" },
+  4: { name: "Rahu (Bắc Nguyệt)", emoji: "☊", title: "Kẻ Phá Vỡ Truyền Thống", desc: "Người sinh ngày 4, 13, 22, 31 — Rahu cai quản. ĐẶC BIỆT khác biệt, sống khác đám đông, đầu óc cách mạng. Cuộc đời có nhiều biến động bất ngờ. Có thể rất giàu hoặc rất khó khăn — không có ở giữa.", color: "#9d7ee8" },
+  5: { name: "Sao Thủy (Budh)", emoji: "☿", title: "Người Linh Hoạt", desc: "Người sinh ngày 5, 14, 23 — Sao Thủy cai quản. Trí tuệ nhanh, giao tiếp, kinh doanh. Đa năng, ứng biến tốt, kiếm tiền qua trí óc. Hợp với truyền thông, IT, thương mại.", color: "#6ec5ff" },
+  6: { name: "Sao Kim (Shukra)", emoji: "♀", title: "Người Đẹp Đẽ", desc: "Người sinh ngày 6, 15, 24 — Sao Kim cai quản. Sắc đẹp, nghệ thuật, tình yêu, hôn nhân. Có sức thu hút mạnh, gu thẩm mỹ. Hợp với thời trang, thiết kế, giải trí, làm đẹp.", color: "#f093fb" },
+  7: { name: "Ketu (Nam Nguyệt)", emoji: "☋", title: "Người Tâm Linh", desc: "Người sinh ngày 7, 16, 25 — Ketu cai quản. Tâm linh, bí ẩn, độc lập. Hay cô đơn, thích triết học, các môn huyền bí. Có thể trở thành nhà tâm linh, thầy thuốc, nghiên cứu viên sâu sắc.", color: "#6ee7b7" },
+  8: { name: "Sao Thổ (Shani)", emoji: "♄", title: "Người Karma", desc: "Người sinh ngày 8, 17, 26 — Saturn/Karma cai quản. Bài học karma rất rõ. Cuộc đời nhiều thử thách nhưng đạt được thành công lớn nhờ kỷ luật. Hoặc tỷ phú, hoặc rất khổ — Saturn không cho ở giữa.", color: "#8a8aa8" },
+  9: { name: "Sao Hỏa (Mangal)", emoji: "♂", title: "Chiến Binh", desc: "Người sinh ngày 9, 18, 27 — Sao Hỏa cai quản. Dũng cảm, năng lượng cao, hay tranh đấu. Phù hợp quân sự, thể thao, kinh doanh, kỹ thuật. Cần kiểm soát nóng nảy và tính hiếu chiến.", color: "#ff6b8a" }
+};
+
+// Vedic compatibility - simplified
+const VD_FRIENDSHIP = {
+  1: { friend: [1,2,3,4,5,7], neutral: [6], enemy: [8,9] },
+  2: { friend: [1,2,3,4,5,7], neutral: [6,9], enemy: [8] },
+  3: { friend: [1,2,3,5,7,9], neutral: [4,8], enemy: [6] },
+  4: { friend: [1,2,5,7,8], neutral: [3,9], enemy: [4,6] },
+  5: { friend: [1,2,3,5], neutral: [6,7,8,9], enemy: [4] },
+  6: { friend: [3,5,6,8], neutral: [4,7,9], enemy: [1,2] },
+  7: { friend: [1,2,3,4,7,9], neutral: [5,6,8], enemy: [8] },
+  8: { friend: [3,4,5,6,8], neutral: [2,7,9], enemy: [1] },
+  9: { friend: [1,2,3,7,9], neutral: [4,5,6,8], enemy: [] }
+};
+
+/* ==================== UI HELPERS ==================== */
+function renderNumCard(label, value, descShort, kd, isMaster, onclickHandler) {
+  const isMulti = Array.isArray(value);
+  const displayVal = isMulti ? value.join(' ') : value;
+  const valueClass = isMulti ? 'value multi-num' : 'value';
+  let cardClass = 'num-card';
+  if (kd) cardClass += ' kd';
+  else if (isMaster) cardClass += ' master';
+  let badge = '';
+  if (kd) badge = `<div class="kd-badge">Nợ Nghiệp ${kd}/${reduceFlat(kd)}</div>`;
+  else if (isMaster) badge = `<div class="master-badge">MASTER ${value}</div>`;
+  return `
+    <div class="${cardClass}" onclick="${onclickHandler}">
+      ${badge}
+      <div class="info">i</div>
+      <div class="label">${label}</div>
+      <div class="${valueClass}">${displayVal}</div>
+      <div class="desc">${descShort}</div>
+    </div>`;
+}
+
+/* ==================== PYTHAGORAS CALCULATIONS ==================== */
+function calcPythagoras() {
+  const name = document.getElementById('py-name').value.trim();
+  const dob = document.getElementById('py-dob').value;
+  if (!name) { alert('Nhập họ tên'); return; }
+  if (!dob) { alert('Chọn ngày sinh'); return; }
+  const [y,m,d] = dob.split('-').map(Number);
+  const lp = pyLifePath(d, m, y);
+  const exp = pyExpression(name);
+  const soul = pySoul(name);
+  const pers = pyPersonality(name);
+
+  const lpData = PY_NUMBERS[lp.value];
+  const lpRich = PY_RICH[lp.value];
+  const energyHtml = lpRich ? `
+    <div class="energy-grid">
+      <div class="energy-col standard"><h4>✓ Chuẩn</h4><ul>${lpRich.standard.map(s => `<li>${s}</li>`).join('')}</ul></div>
+      <div class="energy-col reverse"><h4>↓ Ngược</h4><ul>${lpRich.reverse.map(s => `<li>${s}</li>`).join('')}</ul></div>
+      <div class="energy-col excess"><h4>⚠ Quá</h4><ul>${lpRich.excess.map(s => `<li>${s}</li>`).join('')}</ul></div>
+    </div>` : '';
+  const levelsHtml = lpRich ? lpRich.levels.map((lv,i) => `<div class="level-row"><div class="level-num">LV ${i+1}</div><div class="level-text">${lv}</div></div>`).join('') : '';
+  const famousHtml = lpData?.famous?.map(f => `<div class="famous-item"><span class="who">${f.name}</span> · <span class="role">${f.role}</span></div>`).join('') || '';
+  const quotesHtml = lpRich?.quotes?.map(q => `<div class="quote-box"><p>"${q.text}"</p>${q.author ? `<div class="author">— ${q.author}</div>` : ''}</div>`).join('') || '';
+
+  document.getElementById('py-results').innerHTML = `
+    <div style="text-align:center;padding:14px 0;">
+      <h3 style="color:var(--gold);font-size:1.1rem;">${name.toUpperCase()} • ${d}/${m}/${y}</h3>
+    </div>
+    <h3 class="section-title">🌟 Chỉ số cốt lõi</h3>
+    <div class="number-grid">
+      ${renderNumCard('Đường đời', lp.value, lpData?.short || '', lp.kd, PY_MASTER.has(lp.value), `pyShow(${lp.value},${lp.kd})`)}
+      ${renderNumCard('Sứ mệnh', exp.value, PY_NUMBERS[exp.value]?.short || '', exp.kd, PY_MASTER.has(exp.value), `pyShow(${exp.value},${exp.kd})`)}
+      ${renderNumCard('Linh hồn', soul.value, PY_NUMBERS[soul.value]?.short || '', soul.kd, PY_MASTER.has(soul.value), `pyShow(${soul.value},${soul.kd})`)}
+      ${renderNumCard('Nhân cách', pers.value, PY_NUMBERS[pers.value]?.short || '', pers.kd, PY_MASTER.has(pers.value), `pyShow(${pers.value},${pers.kd})`)}
+    </div>
+    <div class="card" style="margin-top:18px;">
+      <h2>🔍 Phân tích sâu Đường đời ${lp.value} - ${lpData?.title}</h2>
+      <p class="archetype-line">${lpData?.archetype || ''}</p>
+      <div class="keywords">${(lpData?.keywords || []).map(k => `<span>${k}</span>`).join('')}</div>
+      ${lp.kd ? `<div class="quote-box" style="border-left-color:var(--kd);background:rgba(255,107,138,0.1);"><p style="color:var(--kd);font-weight:600;">⚠ Nợ Nghiệp ${lp.kd}/${reduceFlat(lp.kd)}</p><p>${PY_KARMIC_DEBT[lp.kd]}</p></div>` : ''}
+      <h3 class="section-title">⚡ Năng lượng Chuẩn - Ngược - Quá</h3>${energyHtml}
+      <h3 class="section-title">📊 6 Levels phát triển</h3><div class="levels">${levelsHtml}</div>
+      ${lpRich?.graduate ? `<h3 class="section-title">🎓 Bài học cần tốt nghiệp</h3><div class="meaning"><p style="color:var(--text);">${lpRich.graduate}</p></div>` : ''}
+      <h3 class="section-title">⭐ Người nổi tiếng cùng số</h3><div class="famous-list">${famousHtml}</div>
+      <h3 class="section-title">💬 Câu nói tiêu biểu</h3>${quotesHtml}
+    </div>
+  `;
+}
+function pyShow(num, kd) {
+  const data = PY_NUMBERS[num], rich = PY_RICH[num];
+  if (!data) return;
+  const energyHtml = rich ? `<div class="energy-grid">
+    <div class="energy-col standard"><h4>✓ Chuẩn</h4><ul>${rich.standard.map(s=>`<li>${s}</li>`).join('')}</ul></div>
+    <div class="energy-col reverse"><h4>↓ Ngược</h4><ul>${rich.reverse.map(s=>`<li>${s}</li>`).join('')}</ul></div>
+    <div class="energy-col excess"><h4>⚠ Quá</h4><ul>${rich.excess.map(s=>`<li>${s}</li>`).join('')}</ul></div>
+  </div>` : '';
+  const levelsHtml = rich ? rich.levels.map((lv,i) => `<div class="level-row"><div class="level-num">LV ${i+1}</div><div class="level-text">${lv}</div></div>`).join('') : '';
+  const famousHtml = data.famous?.map(f => `<div class="famous-item"><span class="who">${f.name}</span> · <span class="role">${f.role}</span></div>`).join('') || '';
+  const quotesHtml = rich?.quotes?.map(q => `<div class="quote-box"><p>"${q.text}"</p>${q.author ? `<div class="author">— ${q.author}</div>` : ''}</div>`).join('') || '';
+  document.getElementById('modal-body').innerHTML = `
+    <h2>Số ${num} - ${data.title}</h2>
+    <div class="archetype-line">${data.archetype}</div>
+    <div class="keywords">${data.keywords.map(k=>`<span>${k}</span>`).join('')}</div>
+    ${kd ? `<div class="quote-box" style="border-left-color:var(--kd);background:rgba(255,107,138,0.1);margin-top:10px;"><p style="color:var(--kd);font-weight:600;">⚠ Nợ Nghiệp ${kd}/${reduceFlat(kd)}</p><p>${PY_KARMIC_DEBT[kd]}</p></div>` : ''}
+    <h3>Năng lượng Chuẩn - Ngược - Quá</h3>${energyHtml}
+    <h3>6 Levels phát triển</h3><div class="levels">${levelsHtml}</div>
+    ${rich?.graduate ? `<h3>Bài học cần tốt nghiệp</h3><p>${rich.graduate}</p>` : ''}
+    <h3>Người nổi tiếng</h3><div class="famous-list">${famousHtml}</div>
+    <h3>Câu nói tiêu biểu</h3>${quotesHtml}
+  `;
+  document.getElementById('modal').classList.add('show');
+}
+
+function calcPyPinnacle() {
+  const dob = document.getElementById('py-dob2').value;
+  if (!dob) { alert('Chọn ngày sinh'); return; }
+  const [y,m,d] = dob.split('-').map(Number);
+  const dR = pyReduce(d), mR = pyReduce(m), yR = pyReduce(y);
+  const lpFlat = reduceFlat(dR + mR + yR);
+  const lp = pyReduce(dR + mR + yR);
+  const p1 = pyReduceWithKD(mR + dR);
+  const p2 = pyReduceWithKD(dR + yR);
+  const p3 = pyReduceWithKD(p1.value + p2.value);
+  const p4 = pyReduceWithKD(mR + yR);
+  const firstAge = 36 - lpFlat;
+  const ch1 = reduceFlat(Math.abs(mR - dR));
+  const ch2 = reduceFlat(Math.abs(dR - yR));
+  const ch3 = reduceFlat(Math.abs(ch1 - ch2));
+  const ch4 = reduceFlat(Math.abs(mR - yR));
+
+  const pins = [
+    { name:'Chặng 1', from:0, to:firstAge, p:p1, formula:`${mR}+${dR}` },
+    { name:'Chặng 2', from:firstAge+1, to:firstAge+9, p:p2, formula:`${dR}+${yR}` },
+    { name:'Chặng 3', from:firstAge+10, to:firstAge+18, p:p3, formula:`${p1.value}+${p2.value}` },
+    { name:'Chặng 4', from:firstAge+19, to:'cuối đời', p:p4, formula:`${mR}+${yR}` }
+  ];
+  const challenges = [
+    { name:'Thử thách 1', num:ch1, formula:`|${mR}-${dR}|` },
+    { name:'Thử thách 2', num:ch2, formula:`|${dR}-${yR}|` },
+    { name:'Thử thách chính', num:ch3, formula:'TT1-TT2' },
+    { name:'Thử thách 4', num:ch4, formula:`|${mR}-${yR}|` }
+  ];
+
+  document.getElementById('py-pinnacle-results').innerHTML = `
+    <div class="card" style="background:rgba(0,0,0,0.2);">
+      <h2>⛰️ 4 Chặng cuộc đời (Đường đời ${lp})</h2>
+      <div class="pinnacle-grid">${pins.map(p => `
+        <div class="pinnacle">
+          <div class="age">Tuổi ${p.from}${p.to==='cuối đời'?' trở đi':' - '+p.to}</div>
+          <div class="name">${p.name}</div>
+          <div class="num" onclick="pyShow(${p.p.value},null)">${p.p.value}</div>
+          ${p.p.kd ? `<div class="kd-badge" style="position:static;display:inline-block;">Nợ Nghiệp ${p.p.kd}</div>` : ''}
+          <div style="font-size:0.78rem;color:var(--text-dim);margin-top:4px;">= ${p.formula}</div>
+          <p style="font-size:0.82rem;color:var(--text-dim);margin-top:8px;">${PY_NUMBERS[p.p.value]?.short || ''}</p>
+        </div>`).join('')}
+      </div>
+    </div>
+    <div class="card" style="background:rgba(0,0,0,0.2);">
+      <h2>⚔️ 4 Thử thách</h2>
+      <div class="pinnacle-grid">${challenges.map(c => `
+        <div class="pinnacle challenge">
+          <div class="name" style="color:var(--pink)">${c.name}</div>
+          <div class="num">${c.num}</div>
+          <div style="font-size:0.78rem;color:var(--text-dim);margin-top:4px;">= ${c.formula}</div>
+          <p style="font-size:0.82rem;color:var(--text-dim);margin-top:8px;">Vượt qua năng lượng số ${c.num}: ${PY_NUMBERS[c.num]?.short || ''}</p>
+        </div>`).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function buildPyLibrary() {
+  document.getElementById('py-number-library').innerHTML = [1,2,3,4,5,6,7,8,9,11,22,33].map(n => {
+    const m = PY_NUMBERS[n];
+    return `<div class="item" onclick="pyShow(${n},null)">
+      <div class="head"><div class="big-num">${n}</div><div class="title">${m.title}</div></div>
+      <div class="summary">${m.archetype}</div>
+    </div>`;
+  }).join('');
+}
+
+/* ==================== CHALDEAN CALCULATIONS ==================== */
+function calcChaldean() {
+  const name = document.getElementById('ch-name').value.trim();
+  const dob = document.getElementById('ch-dob').value;
+  if (!name) { alert('Nhập họ tên'); return; }
+
+  // Name analysis
+  const expSum = chSum(name);
+  const expReduced = reduceFlat(expSum);
+  const soulSum = chSumVowels(name);
+  const soulReduced = reduceFlat(soulSum);
+  const persSum = chSumConsonants(name);
+  const persReduced = reduceFlat(persSum);
+
+  // Day number from DOB
+  let dayNumHtml = '';
+  let lifeNumHtml = '';
+  if (dob) {
+    const [y,m,d] = dob.split('-').map(Number);
+    const dayNum = reduceFlat(d);
+    const lifeNum = reduceFlat(d + m + y);
+    dayNumHtml = renderNumCard('Số Tâm linh (Day)', dayNum, CH_NUMBERS[dayNum]?.short || '', null, false, `chShow(${dayNum})`);
+    lifeNumHtml = renderNumCard('Số Định mệnh (Life)', lifeNum, CH_NUMBERS[lifeNum]?.short || '', null, false, `chShow(${lifeNum})`);
+  }
+
+  // Compound number for name (the CRITICAL piece in Chaldean)
+  const compoundDesc = CH_COMPOUND[expSum];
+
+  document.getElementById('ch-results').innerHTML = `
+    <div style="text-align:center;padding:14px 0;">
+      <h3 style="color:var(--orange);font-size:1.1rem;">${name.toUpperCase()}${dob ? ' • ' + dob.split('-').reverse().join('/') : ''}</h3>
+    </div>
+    <h3 class="section-title">🌟 Chỉ số chính</h3>
+    <div class="number-grid">
+      ${dayNumHtml}
+      ${lifeNumHtml}
+      ${renderNumCard('Số Tên (Name)', expReduced, CH_NUMBERS[expReduced]?.short || '', null, false, `chShow(${expReduced})`)}
+      ${renderNumCard('Linh hồn (Vowels)', soulReduced, CH_NUMBERS[soulReduced]?.short || '', null, false, `chShow(${soulReduced})`)}
+      ${renderNumCard('Nhân cách (Consonants)', persReduced, CH_NUMBERS[persReduced]?.short || '', null, false, `chShow(${persReduced})`)}
+    </div>
+
+    ${compoundDesc ? `
+    <div class="card" style="margin-top:16px;background:rgba(255,169,77,0.08);border-color:var(--orange);">
+      <h2 style="color:var(--orange)">🔢 Compound Number (Số Ghép): ${expSum}</h2>
+      <p style="color:var(--text-dim);font-size:0.85rem;margin-bottom:8px;">Đây là phần QUAN TRỌNG NHẤT của Chaldean - mô tả 'spiritual essence' của tên trước khi rút gọn.</p>
+      <h3 style="color:var(--orange);margin-top:8px;">${compoundDesc.title}</h3>
+      <p style="color:var(--text);font-size:0.95rem;line-height:1.7;">${compoundDesc.desc}</p>
+      <p style="color:var(--text-dim);font-size:0.82rem;margin-top:8px;">Rút gọn về: <strong>${compoundDesc.reduces}</strong></p>
+    </div>
+    ` : ''}
+
+    <div class="card" style="margin-top:16px;">
+      <h2>🔍 Phân tích Số Tên ${expReduced} - ${CH_NUMBERS[expReduced]?.title}</h2>
+      <p style="color:var(--text-dim);font-size:0.95rem;line-height:1.7;">${CH_NUMBERS[expReduced]?.desc || ''}</p>
+    </div>
+
+    <div class="info-box">
+      <strong>Đặc trưng Chaldean:</strong> Ý nghĩa của Compound Number (số trước khi rút gọn) thường được coi trọng hơn số đơn rút gọn. Compound 19, 23, 27 là "may mắn nhất". Compound 13, 14, 16 cần thận trọng.
+    </div>
+  `;
+}
+
+function chShow(num) {
+  const m = CH_NUMBERS[num];
+  if (!m) return;
+  document.getElementById('modal-body').innerHTML = `
+    <h2>Số ${num} - ${m.title}</h2>
+    <div class="archetype-line">CHALDEAN NUMEROLOGY</div>
+    <p style="font-size:0.95rem;line-height:1.7;">${m.desc}</p>
+    <h3>Tổng quát</h3><p>${m.short}</p>
+  `;
+  document.getElementById('modal').classList.add('show');
+}
+
+function buildChLibrary() {
+  document.getElementById('ch-number-library').innerHTML = [1,2,3,4,5,6,7,8,9].map(n => {
+    const m = CH_NUMBERS[n];
+    return `<div class="item" onclick="chShow(${n})">
+      <div class="head"><div class="big-num">${n}</div><div class="title">${m.title}</div></div>
+      <div class="summary">${m.short}</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('ch-compound-library').innerHTML = Object.keys(CH_COMPOUND).map(n => {
+    const c = CH_COMPOUND[n];
+    return `<div class="item" onclick="chShowCompound(${n})">
+      <div class="head"><div class="big-num">${n}</div><div class="title">${c.title}</div></div>
+      <div class="summary">${c.desc.substring(0, 90)}...</div>
+    </div>`;
+  }).join('');
+}
+
+function chShowCompound(num) {
+  const c = CH_COMPOUND[num];
+  if (!c) return;
+  document.getElementById('modal-body').innerHTML = `
+    <h2>${c.title}</h2>
+    <div class="archetype-line">CHALDEAN COMPOUND NUMBER</div>
+    <p style="font-size:0.95rem;line-height:1.7;">${c.desc}</p>
+    <h3>Rút gọn về</h3><p>Số đơn: <strong>${c.reduces}</strong> - ${CH_NUMBERS[c.reduces]?.title || ''}</p>
+  `;
+  document.getElementById('modal').classList.add('show');
+}
+
+/* ==================== KABBALAH CALCULATIONS ==================== */
+function calcKabbalah() {
+  const name = document.getElementById('kb-name').value.trim();
+  if (!name) { alert('Nhập họ tên'); return; }
+  const result = kbPath(name);
+  const path = KB_PATHS[result.path];
+
+  document.getElementById('kb-results').innerHTML = `
+    <div style="text-align:center;padding:16px 0;">
+      <h3 style="color:var(--purple);font-size:1.15rem;">${name.toUpperCase()}</h3>
+      <p style="color:var(--text-dim);font-size:0.85rem;">Tổng giá trị Hebrew: ${result.total}</p>
+    </div>
+
+    <div class="card" style="background:rgba(157,126,232,0.08);border-color:var(--purple);">
+      <div style="text-align:center;padding:20px 0;">
+        <div style="font-size:5rem;color:var(--purple);line-height:1;">${path.hebrew}</div>
+        <div style="font-size:1.1rem;color:var(--text-mute);margin-top:4px;">${path.letter}</div>
+        <div style="font-size:2rem;font-weight:700;color:var(--purple);margin:10px 0;">PATH ${result.path}</div>
+        <div style="font-size:1.2rem;color:var(--gold);">${path.title}</div>
+      </div>
+      <p style="color:var(--text);font-size:0.95rem;line-height:1.7;text-align:center;padding:0 10px;">${path.desc}</p>
+    </div>
+
+    <div class="info-box">
+      <strong>Cách tính:</strong> Tên "${name}" có tổng Hebrew = ${result.total}. Lấy ${result.total} mod 22 = ${result.total % 22 === 0 ? 22 : result.total % 22}. Đây là Path ${result.path} - ứng với chữ Hebrew "${path.letter}" (${path.hebrew}) và lá Tarot "${path.title}".
+    </div>
+  `;
+}
+
+function kbShow(pathNum) {
+  const p = KB_PATHS[pathNum];
+  if (!p) return;
+  document.getElementById('modal-body').innerHTML = `
+    <h2>Path ${pathNum} - ${p.title}</h2>
+    <div class="archetype-line">KABBALAH · ${p.letter} (${p.hebrew})</div>
+    <div style="text-align:center;font-size:5rem;color:var(--purple);margin:20px 0;">${p.hebrew}</div>
+    <p style="font-size:0.95rem;line-height:1.7;">${p.desc}</p>
+  `;
+  document.getElementById('modal').classList.add('show');
+}
+
+function buildKbLibrary() {
+  document.getElementById('kb-path-library').innerHTML = Object.keys(KB_PATHS).map(n => {
+    const p = KB_PATHS[n];
+    return `<div class="item" onclick="kbShow(${n})">
+      <div class="head"><div class="big-num" style="color:var(--purple);background:none;-webkit-background-clip:initial;background-clip:initial;">${p.hebrew}</div><div class="title">${n}. ${p.title}</div></div>
+      <div class="summary">${p.letter} - ${p.desc.substring(0, 80)}...</div>
+    </div>`;
+  }).join('');
+}
+
+/* ==================== VEDIC CALCULATIONS ==================== */
+function calcVedic() {
+  const name = document.getElementById('vd-name').value.trim();
+  const dob = document.getElementById('vd-dob').value;
+  if (!dob) { alert('Chọn ngày sinh (Vệ Đà bắt buộc)'); return; }
+  const [y,m,d] = dob.split('-').map(Number);
+  const mulank = vdMulank(d);
+  const bhagyank = vdBhagyank(d, m, y);
+  const namank = name ? vdNameSum(name) : null;
+
+  const friendship = VD_FRIENDSHIP[mulank];
+  const friendsHtml = friendship.friend.map(n => `<span style="color:var(--green);">${n}</span>`).join(', ');
+  const enemiesHtml = friendship.enemy.length > 0 ? friendship.enemy.map(n => `<span style="color:var(--red);">${n}</span>`).join(', ') : 'Không có';
+
+  document.getElementById('vd-results').innerHTML = `
+    <div style="text-align:center;padding:14px 0;">
+      <h3 style="color:var(--blue);font-size:1.1rem;">${name ? name.toUpperCase() : '(không có tên)'} • ${d}/${m}/${y}</h3>
+    </div>
+
+    <h3 class="section-title">🪐 Bộ ba Vệ Đà</h3>
+    <div class="number-grid">
+      ${renderNumCard('Tâm số (Mulank)', mulank, VD_PLANETS[mulank].title, null, false, `vdShow(${mulank})`)}
+      ${renderNumCard('Số mệnh (Bhagyank)', bhagyank, VD_PLANETS[bhagyank].title, null, false, `vdShow(${bhagyank})`)}
+      ${namank ? renderNumCard('Số tên (Namank)', namank, VD_PLANETS[namank].title, null, false, `vdShow(${namank})`) : ''}
+    </div>
+
+    <div class="planet-card" style="margin-top:16px;border-left-color:${VD_PLANETS[mulank].color};">
+      <div class="planet" style="color:${VD_PLANETS[mulank].color};">${VD_PLANETS[mulank].emoji}</div>
+      <div class="info">
+        <h4 style="color:${VD_PLANETS[mulank].color};">Tâm số ${mulank}: ${VD_PLANETS[mulank].name}</h4>
+        <p>${VD_PLANETS[mulank].desc}</p>
+      </div>
+    </div>
+
+    ${mulank !== bhagyank ? `
+    <div class="planet-card" style="border-left-color:${VD_PLANETS[bhagyank].color};">
+      <div class="planet" style="color:${VD_PLANETS[bhagyank].color};">${VD_PLANETS[bhagyank].emoji}</div>
+      <div class="info">
+        <h4 style="color:${VD_PLANETS[bhagyank].color};">Số mệnh ${bhagyank}: ${VD_PLANETS[bhagyank].name}</h4>
+        <p>${VD_PLANETS[bhagyank].desc}</p>
+      </div>
+    </div>` : ''}
+
+    ${namank && namank !== mulank && namank !== bhagyank ? `
+    <div class="planet-card" style="border-left-color:${VD_PLANETS[namank].color};">
+      <div class="planet" style="color:${VD_PLANETS[namank].color};">${VD_PLANETS[namank].emoji}</div>
+      <div class="info">
+        <h4 style="color:${VD_PLANETS[namank].color};">Số tên ${namank}: ${VD_PLANETS[namank].name}</h4>
+        <p>${VD_PLANETS[namank].desc}</p>
+      </div>
+    </div>` : ''}
+
+    <div class="card" style="margin-top:16px;background:rgba(110,197,255,0.05);border-color:var(--blue);">
+      <h2 style="color:var(--blue);">🤝 Hành tinh hợp/khắc với Tâm số ${mulank}</h2>
+      <p style="color:var(--text-dim);font-size:0.9rem;">Khi cần đối tác, bạn đời, hoặc hợp tác kinh doanh, ưu tiên người có Mulank hoặc Bhagyank thuộc nhóm bạn.</p>
+      <p style="margin-top:10px;"><strong style="color:var(--green);">Bạn (Mitra):</strong> ${friendsHtml}</p>
+      <p><strong style="color:var(--orange);">Trung lập (Sama):</strong> ${friendship.neutral.join(', ') || 'Không có'}</p>
+      <p><strong style="color:var(--red);">Khắc (Shatru):</strong> ${enemiesHtml}</p>
+    </div>
+
+    <div class="info-box">
+      <strong>Đặc trưng Vệ Đà:</strong> Tâm số (ngày sinh) thể hiện bản chất bẩm sinh, không thay đổi. Số mệnh thể hiện con đường/định mệnh. Khi 2 số này đồng điệu, cuộc đời thuận lợi. Khi mâu thuẫn (VD: hành tinh khắc nhau), thường có nhiều thử thách bên trong.
+    </div>
+  `;
+}
+
+function vdShow(num) {
+  const p = VD_PLANETS[num];
+  if (!p) return;
+  document.getElementById('modal-body').innerHTML = `
+    <h2 style="background:linear-gradient(135deg,${p.color},var(--purple));-webkit-background-clip:text;background-clip:text;color:transparent;">Số ${num} - ${p.name}</h2>
+    <div class="archetype-line">VEDIC NUMEROLOGY</div>
+    <div style="text-align:center;font-size:5rem;color:${p.color};margin:20px 0;">${p.emoji}</div>
+    <h3>${p.title}</h3>
+    <p style="font-size:0.95rem;line-height:1.7;">${p.desc}</p>
+  `;
+  document.getElementById('modal').classList.add('show');
+}
+
+function buildVdLibrary() {
+  document.getElementById('vd-planet-library').innerHTML = Object.keys(VD_PLANETS).map(n => {
+    const p = VD_PLANETS[n];
+    return `<div class="item" onclick="vdShow(${n})">
+      <div class="head">
+        <div class="big-num" style="color:${p.color};background:none;-webkit-background-clip:initial;background-clip:initial;">${p.emoji}</div>
+        <div><div class="title">${n}. ${p.name}</div></div>
+      </div>
+      <div class="summary">${p.title}</div>
+    </div>`;
+  }).join('');
+}
+
+/* ==================== INIT ==================== */
+function closeModal() { document.getElementById('modal').classList.remove('show'); }
+document.getElementById('modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
+
+buildPyLibrary();
+buildChLibrary();
+buildKbLibrary();
+buildVdLibrary();
+</script>
+</body>
+</html>
