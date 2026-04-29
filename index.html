@@ -212,6 +212,11 @@
   .quote-box p { font-style: italic; color: var(--text); font-size: 1.05rem; padding-left: 24px; }
   .quote-box .author { color: var(--gold); font-family: 'Cinzel', serif; font-size: 0.85rem; margin-top: 8px; font-weight: 600; letter-spacing: 1.5px; padding-left: 24px; }
 
+  .story-box { background: linear-gradient(135deg, rgba(212,165,116,0.07), rgba(8,5,20,0.55)); border: 1px solid var(--border); border-radius: 2px; padding: 16px 22px 16px 22px; margin-top: 14px; position: relative; }
+  .story-box .story-label { font-family: 'Cinzel', serif; color: var(--gold); font-size: 0.72rem; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 10px; display: block; }
+  .story-box .story-label::before { content: '✧ '; color: var(--gold-bright); }
+  .story-box p { color: var(--text); font-style: italic; font-size: 1.02rem; line-height: 1.85; margin: 0; }
+
   .planet-card { display: flex; align-items: center; gap: 18px; padding: 18px; background: linear-gradient(135deg, rgba(45, 35, 28, 0.3), rgba(8, 5, 20, 0.5)); border-radius: 2px; margin-top: 10px; border-left: 3px solid var(--planet-color, var(--gold)); }
   .planet-card .planet { font-size: 2.4rem; color: var(--planet-color); }
   .planet-card .info h4 { font-family: 'Cinzel', serif; color: var(--planet-color); font-size: 1.05rem; margin-bottom: 6px; letter-spacing: 1.5px; }
@@ -689,11 +694,59 @@ const PY_KD = [13, 14, 16, 19];
 function pyReduce(n) { n = Math.abs(n); while (n > 9) { if (PY_MASTER.has(n)) return n; n = digitSum(n); } return n; }
 function pyReduceWithKD(n) { n = Math.abs(n); if (n <= 9 || PY_MASTER.has(n)) return { value: n, kd: null }; let kd = null; while (n > 9 && !PY_MASTER.has(n)) { if (PY_KD.includes(n)) kd = n; n = digitSum(n); } if (PY_MASTER.has(n)) return { value: n, kd: null }; return { value: n, kd }; }
 function pyNameLetters(name) { return normalizeVN(name).replace(/[^A-Z\s]/g, ''); }
-function isYVowelPy(name, idx) { const c = name[idx]; if (c !== 'Y') return false; const prev = name[idx-1], next = name[idx+1]; if ((!prev || prev === ' ') && next && PY_VOWELS.has(next)) return false; return true; }
-function pyExpression(name) { let s = 0; for (const c of pyNameLetters(name)) if (PY_LETTER[c]) s += PY_LETTER[c]; return pyReduceWithKD(s); }
-function pySoul(name) { const n = pyNameLetters(name); let s = 0; for (let i=0;i<n.length;i++) { const c = n[i]; if (!PY_LETTER[c]) continue; if (PY_VOWELS.has(c) || isYVowelPy(n,i)) s += PY_LETTER[c]; } return pyReduceWithKD(s); }
-function pyPersonality(name) { const n = pyNameLetters(name); let s = 0; for (let i=0;i<n.length;i++) { const c = n[i]; if (!PY_LETTER[c]) continue; if (!PY_VOWELS.has(c) && !isYVowelPy(n,i)) s += PY_LETTER[c]; } return pyReduceWithKD(s); }
-function pyLifePath(d, m, y) { return pyReduceWithKD(pyReduce(d) + pyReduce(m) + pyReduce(y)); }
+// Y rule per GEIN: Y consonant when adjacent to vowel (Nguyễn, Uyên, Thuỷ)
+function isYVowelPy(name, idx) {
+  const c = name[idx]; if (c !== 'Y') return false;
+  const prev = name[idx-1], next = name[idx+1];
+  if ((!prev || prev === ' ') && next && PY_VOWELS.has(next)) return false;
+  if (prev && prev !== ' ' && PY_VOWELS.has(prev)) return false;
+  if (next && next !== ' ' && PY_VOWELS.has(next)) return false;
+  return true;
+}
+// Per-name-part method: each part reduced (keep master), sum, detect KD on intermediate
+function pyExpression(name) {
+  const parts = pyNameLetters(name).split(/\s+/).filter(p => p.length > 0);
+  let intermediate = 0;
+  for (const part of parts) { let s = 0; for (const c of part) if (PY_LETTER[c]) s += PY_LETTER[c]; intermediate += pyReduce(s); }
+  const r = pyReduceWithKD(intermediate); r.intermediate = intermediate; return r;
+}
+function pySoul(name) {
+  const parts = pyNameLetters(name).split(/\s+/).filter(p => p.length > 0);
+  let intermediate = 0;
+  for (const part of parts) {
+    let s = 0;
+    for (let i=0;i<part.length;i++) { const c = part[i]; if (!PY_LETTER[c]) continue; if (PY_VOWELS.has(c) || isYVowelPy(part,i)) s += PY_LETTER[c]; }
+    intermediate += pyReduce(s);
+  }
+  const r = pyReduceWithKD(intermediate); r.intermediate = intermediate; return r;
+}
+function pyPersonality(name) {
+  const parts = pyNameLetters(name).split(/\s+/).filter(p => p.length > 0);
+  let intermediate = 0;
+  for (const part of parts) {
+    let s = 0;
+    for (let i=0;i<part.length;i++) { const c = part[i]; if (!PY_LETTER[c]) continue; if (!PY_VOWELS.has(c) && !isYVowelPy(part,i)) s += PY_LETTER[c]; }
+    intermediate += pyReduce(s);
+  }
+  const r = pyReduceWithKD(intermediate); r.intermediate = intermediate; return r;
+}
+function pyLifePath(d, m, y) {
+  const dR = pyReduce(d), mR = pyReduce(m), yR = pyReduce(y);
+  const intermediate = dR + mR + yR;
+  const r = pyReduceWithKD(intermediate); r.intermediate = intermediate;
+  // KD detection từ all-digits sum (catch trường hợp như 08/11/2016 → 19/1)
+  const allSum = (String(d) + String(m) + String(y)).split('').reduce((a, c) => a + (parseInt(c) || 0), 0);
+  if (PY_KD.includes(allSum) && reduceFlat(allSum) === reduceFlat(r.value) && !r.kd && !PY_MASTER.has(r.value)) r.kd = allSum;
+  return r;
+}
+function pyMaturity(lp, exp) { return pyReduce(lp.intermediate + exp.intermediate); }
+function pyBalance(name) { const parts = pyNameLetters(name).split(/\s+/).filter(p => p.length > 0); let s = 0; for (const p of parts) if (PY_LETTER[p[0]]) s += PY_LETTER[p[0]]; return pyReduce(s); }
+function pyHiddenPassion(name) { const counts = {1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0}; for (const c of pyNameLetters(name)) if (PY_LETTER[c]) counts[PY_LETTER[c]]++; const max = Math.max(...Object.values(counts)); if (max === 0) return []; return Object.keys(counts).filter(k => counts[k] === max).map(Number); }
+function pyKarmicLessons(name) { const present = new Set(); for (const c of pyNameLetters(name)) if (PY_LETTER[c]) present.add(PY_LETTER[c]); const missing = []; for (let i=1;i<=9;i++) if (!present.has(i)) missing.push(i); return missing; }
+function pyRationalThought(givenName, day) { let s = day; for (const c of pyNameLetters(givenName)) if (PY_LETTER[c]) s += PY_LETTER[c]; return pyReduce(s); }
+function pyBridgeGEIN(a, b) { const aBase = PY_MASTER.has(a) ? reduceFlat(a) : a; const bBase = PY_MASTER.has(b) ? reduceFlat(b) : b; return Math.abs(aBase - bBase); }
+function pyPersonalYear(d, m, cy) { return reduceFlat(reduceFlat(d) + reduceFlat(m) + reduceFlat(cy)); }
+function pyPersonalMonth(py, cm) { return reduceFlat(py + reduceFlat(cm)); }
 
 const PY_NUMBERS = {
   1:{archetype:"ĐỘC LẬP - LÃNH ĐẠO - QUYẾT LIỆT",title:"Người Tiên Phong",short:"Lãnh đạo, độc lập, quyết đoán",keywords:["Độc lập","Lãnh đạo","Tiên phong"],famous:[{name:"Steve Jobs",role:"Sáng lập Apple"},{name:"Phạm Nhật Vượng",role:"VinGroup"}]},
@@ -724,6 +777,69 @@ const PY_RICH = {
   33:{standard:["Mục đích cao đẹp","Bao dung, chăm sóc","Sáng tạo nghệ thuật","Duyên dáng"],reverse:["Thiếu giao tiếp","Tiêu cực","Vô tâm"],excess:["Khoa trương","Quá nhẫn nhịn"],levels:["Rút về số 6","Chăm sóc gia đình","Chữa lành cộng đồng nhỏ","Người thầy ảnh hưởng","Lãnh đạo phong trào nhân ái","Bậc thầy chữa lành"],graduate:"Người chữa lành mang tình yêu cho thế giới",quotes:[{text:"Tự đổ đầy ly trước khi rót cho người khác",author:""}]}
 };
 const PY_KARMIC_DEBT = {13:"Bài học về lười biếng kiếp trước. Kiếp này phải làm việc cực kỳ chăm chỉ, có tổ chức.",14:"Lạm dụng tự do kiếp trước. Kiếp này dễ gặp cám dỗ. Học kỷ luật để biến tự do thành sức mạnh.",16:"Kiêu ngạo kiếp trước. Kiếp này gặp 'cú sốc lớn' để thức tỉnh tâm linh.",19:"Lạm dụng quyền lực kiếp trước. Kiếp này tự xoay xở, học độc lập đúng nghĩa."};
+
+const STORIES = {
+  py: {
+    1: "Một thanh niên 23 tuổi rời công ty với 2.000 USD vay từ mẹ. Anh dán lên tường phòng trọ một dòng chữ: 'Không quay lại.' Mỗi ngày anh nhìn nó trước khi ngủ. Năm năm sau, công ty anh có 200 nhân viên. Khi được hỏi bí quyết, anh chỉ trả lời: 'Tôi đơn giản là người đầu tiên không cho phép mình bỏ cuộc.'",
+    2: "Trong cuộc họp căng thẳng, hai phe đối đầu suốt ba tiếng không ai nhường. Cô ngồi im, lắng nghe, ghi chép. Đến cuối, cô đặt một câu hỏi đơn giản: 'Có phải cả hai bên đều đang sợ điều gì đó? Chúng ta có thể nói về nỗi sợ thay vì giải pháp được không?' Cuộc họp đổi hướng — giải pháp đến trong 30 phút.",
+    3: "Đêm đó cô đứng cánh gà, run cầm cập trước 500 khán giả. Một tin nhắn từ thầy giáo cũ: 'Họ không đến để phán xét — họ đến vì cần ánh sáng. Hãy LÀ ánh sáng đó.' Cô bước lên sân khấu, cười thật tươi, mở miệng. 60 phút sau, cả khán phòng đứng dậy vỗ tay không ngừng.",
+    4: "Anh gắn một viên gạch mỗi ngày. Trong khi bạn bè đầu tư crypto, mua nhà flip nhanh, anh chỉ mở cửa hàng đúng 7h sáng và đóng đúng 9h tối. 20 năm sau, anh sở hữu 12 chi nhánh trong khi nhiều bạn cũ đã phá sản. Bí mật ư? 'Tôi không bao giờ nghỉ. Mỗi ngày một viên gạch — không hơn không kém.'",
+    5: "Cô đã làm 7 nghề trong 5 năm: marketer, blogger du lịch, dịch giả, sales bất động sản, dạy yoga, mở cafe, viết sách. Mọi người nói cô không kiên trì. Cô chỉ cười: 'Tôi đang sưu tầm vũ khí. Một ngày tôi sẽ kết hợp tất cả thành thứ chưa ai từng thấy.' Năm 35 tuổi cô mở học viện đào tạo digital nomad — và tất cả 7 nghề đều hữu ích.",
+    6: "Bà nuôi 5 đứa cháu sau khi con gái mất vì tai nạn. Mỗi sáng dậy 5h nấu cơm. Mỗi tối kể chuyện trước khi ngủ. Khi được hỏi sao không kêu mệt, bà nói: 'Tình yêu không phải cảm xúc — nó là QUYẾT ĐỊNH. Mỗi sáng tôi quyết định yêu chúng thêm một ngày nữa. Vậy thôi.'",
+    7: "Anh sống một mình trong căn phòng có 2.000 cuốn sách. Bạn bè gọi anh là 'kẻ ẩn dật.' Một ngày, một thanh niên 19 tuổi gõ cửa: 'Tôi đọc bài viết của anh trên blog — nó đã ngăn tôi khỏi tự tử.' Anh bỗng hiểu: tâm linh sâu sắc không cần đám đông để có ý nghĩa. Một người được cứu là đủ.",
+    8: "Người đàn ông đó phá sản 3 lần. Mất nhà, vợ ly dị, ngân hàng kiện. Lần thứ 4 anh xây lại — lần này khác. Anh dùng tiền không phải để mua nhà to, mà để mở quỹ dạy lập nghiệp cho 1.000 thanh niên nghèo. Một học trò hỏi: 'Vì sao thầy không giữ tiền?' 'Tiền chỉ có ý nghĩa khi nó tạo ra tiền cho người khác.'",
+    9: "Ngày bà 75 tuổi, người ta hỏi vì sao bà tự rửa chân cho người vô gia cư mỗi tuần. 'Vì khi tôi 25,' bà trả lời chậm rãi, 'có một người đàn bà lạ rửa chân cho mẹ tôi đang hấp hối ở bệnh viện. Tôi không bao giờ biết tên bà ấy. Giờ tôi trả lại — không phải cho mẹ tôi, mà cho thế giới.' Đó là số 9 — món nợ không bao giờ trả hết, chỉ truyền tiếp.",
+    11: "Cô có khả năng nhìn người và biết họ đang đau. Lúc 12 tuổi, cô đã lên cơn lo âu vì cảm xúc của cả lớp tràn vào mình như sóng. Bố mẹ tưởng cô bị bệnh. 30 năm sau, hàng nghìn người tìm đến cô để được chữa lành. Cô không học tâm lý — cô chỉ học một điều: cách đứng vững giữa cơn bão cảm xúc của người khác.",
+    22: "Anh có một ý tưởng vĩnh viễn ám ảnh: xây thành phố tự cung cấp năng lượng. Người ta cười anh suốt 10 năm — 'kỹ sư mơ mộng.' Anh mua 100 hecta đất hoang. Năm thứ 15, một viên gạch đầu tiên. Năm thứ 30, 50.000 người sống trong thành phố không khói. 'Tôi không xây thành phố,' anh nói khiêm nhường. 'Tôi chỉ kiên nhẫn đặt từng viên đá đúng chỗ trong 30 năm.'",
+    33: "Cô là cô giáo mầm non suốt 40 năm. Không tiền nhiều, không danh vọng, không quyền lực. Khi cô qua đời, đám tang có 3.000 người đến tiễn — toàn học sinh cũ giờ đã thành CEO, bác sĩ, luật sư, kỹ sư, nghệ sĩ. Mỗi người kể một câu chuyện cô đã thay đổi cuộc đời họ ra sao chỉ bằng một câu nói, một cái ôm. Đó là di sản thật sự — không thể đếm bằng tiền."
+  },
+  ch: {
+    1: "Pharaoh Akhenaten đứng trên đỉnh đền thờ Aten. Khi mặt trời lên, toàn dân Ai Cập quỳ xuống. Ông đã thay đổi 3000 năm tôn giáo đa thần — chỉ thờ Mặt Trời. Người ta gọi ông là kẻ điên, kẻ phản đạo. 3300 năm sau, tên ông vẫn còn được nhắc đến. Đó là số 1 Mặt Trời — không sợ đứng một mình giữa thế giới.",
+    2: "Trên bãi biển đêm trăng tròn, ngư dân già nói với cháu: 'Đừng cố gắng đoán biển. Hãy LẮNG NGHE nó.' Đứa cháu hỏi: 'Lắng nghe bằng gì?' 'Bằng cách im lặng đủ lâu để biển dạy ta.' Trăng dạy biển khi nào lên, khi nào xuống — chúng ta chỉ là khách trên dòng nước. Đó là số 2 Mặt Trăng — trí tuệ qua sự lắng nghe.",
+    3: "Vị Guru ngồi dưới gốc Bồ đề suốt 40 năm. Một học trò trẻ hỏi: 'Thầy đã biết tất cả mọi điều?' Vị Guru mỉm cười: 'Không. Tôi chỉ biết một điều quan trọng nhất — rằng mình KHÔNG biết tất cả. Sự khôn ngoan thật sự bắt đầu từ đó.' Số 3 Sao Mộc — trí tuệ là biết giới hạn của trí tuệ.",
+    4: "Năm 1976 ở Albuquerque, hai gã trai lang thang — một bị đuổi học, một bị bố mẹ ruột bỏ rơi — lập một công ty trong garage gia đình. Cả Thung lũng Silicon gọi họ là điên. 30 năm sau, một trong hai người (Steve Jobs) đã thay đổi cách 7 tỷ người giao tiếp. Số 4 Rahu không cần được hiểu — nó chỉ cần được sống đến tận cùng.",
+    5: "Hermes — sao Thủy của Hy Lạp — bay nhanh đến nỗi không ai nhìn rõ. Anh vừa lừa Apollo trộm bò, vừa làm bạn thân với Zeus, vừa dẫn linh hồn xuống địa ngục, vừa truyền tin yêu cho Aphrodite. Một thân hình nhiều vai trò. Đó là số 5 Sao Thủy — nhanh đến mức bạn không kịp giận, đa năng đến mức không ai đoán được nước cờ.",
+    6: "Aphrodite sinh ra từ bọt biển. Khi bà bước lên bờ Cyprus, hoa nở dưới chân, gió ngừng thổi, sóng dịu lại. Bà có thể chiếm hữu mọi vị thần — nhưng bà chọn KHÔNG. Vẻ đẹp không phải để giam giữ — nó là quà tặng được trao đi mỗi ngày. Số 6 Sao Kim — cái đẹp biến mọi không gian thành thiêng liêng.",
+    7: "Nhà sư già ngồi 49 ngày dưới gốc cây Bồ đề. Không ăn, không uống, không nói. Khi mở mắt vào ngày thứ 50, ông không còn là chính mình nữa — ông đã THẤY. Đám đông không có ở đó. Không tiếng vỗ tay. Chỉ một con chim hót. Số 7 Ketu — không cần đám đông để có ý nghĩa, chỉ cần một lần thấy được sự thật là đủ cho cả kiếp.",
+    8: "Ngày anh 35 tuổi, anh phá sản hoàn toàn. Saturn đã đến thăm như một người khách không mời. 'Đây là cú đánh cuối cùng?' anh hỏi vũ trụ trong tuyệt vọng. 'Không,' Saturn trả lời lạnh lùng. 'Đây là viên gạch ĐẦU TIÊN. Bây giờ ta xem mày có dám xây lại từ đầu không.' 15 năm sau, anh đứng trên bục Forbes — và anh hiểu: Saturn không phá hủy mình, Saturn TÔI LUYỆN mình.",
+    9: "Chiến binh Spartan đứng cạnh con trai 18 tuổi sắp ra trận. Người mẹ trao cho con cây kiếm và nói câu duy nhất: 'Trở về VỚI cây kiếm này — hoặc TRÊN cây kiếm này.' Không có lựa chọn thứ ba. Số 9 Sao Hỏa không biết thỏa hiệp — lửa không thể ướt, chiến binh không thể lùi. Hoặc bạn đốt cháy mục đích sống, hoặc bạn không phải số 9."
+  },
+  kb: {
+    1: "Trong bóng tối tuyệt đối trước khi vũ trụ tồn tại, một tiếng nói vang lên: 'Hãy có ánh sáng.' Và có ánh sáng. Bạn — người mang Path 1 — cũng có thể nói câu đó. Mỗi ngày bạn quyết định cuộc sống mình sẽ là gì. Bạn là Đấng Sáng Tạo nhỏ trong vương quốc của riêng mình.",
+    2: "Một thiền sư hỏi đệ tử: 'Câu trả lời ở đâu?' Đệ tử nói: 'Trong sách thánh.' 'Sai.' 'Trong thầy.' 'Sai.' Đệ tử khóc nức nở: 'Vậy thì ở đâu?' Thiền sư mỉm cười: 'Đúng câu hỏi rồi. Bây giờ hãy ngồi yên.' Path 2 — câu trả lời không ở ngoài, mà ở trong sự tĩnh lặng.",
+    3: "Bà mẹ tha thứ cho người đã giết con bà. Trước tòa, bà ôm hắn và khóc. Mọi người không hiểu — 'Bà ấy yếu đuối quá!' Nhưng bà chỉ trả lời: 'Tha thứ không phải vì hắn đáng tha thứ. Tha thứ vì giận dữ giết tôi nhanh hơn hắn giết con tôi.' Path 3 — tình yêu là sức mạnh, không phải yếu đuối.",
+    4: "Anh xây tường. Mỗi viên gạch thẳng. Mỗi sáng đến đúng 7h, mỗi tối về đúng 7h. Người ta cười: 'Cuộc đời gì mà nhàm chán vậy.' 30 năm sau, khi cơn bão lịch sử đến, mọi cấu trúc khác sụp đổ. Chỉ tường của anh đứng vững. Path 4 — nhàm chán hôm nay là an toàn của ngày mai.",
+    5: "Học trò: 'Thầy có thể chỉ con đường đến giác ngộ?' Thầy: 'Không. Ta chỉ có thể chỉ ngón tay về phía mặt trăng. Đừng nhầm ngón tay với mặt trăng.' Học trò ngơ ngác. Thầy thở dài: 'Truyền thống là ngón tay. Sự thật là mặt trăng. Hãy đi theo, đừng dừng lại.' Path 5 — cầu nối, không phải đích đến.",
+    6: "Hai dòng sông gặp nhau ở thung lũng. Một mang nước mặn từ biển ngược về, một mang nước ngọt từ núi xuống. Chúng không tranh cãi 'ai đúng.' Chúng chỉ chảy. Cuối cùng, biển nhận cả hai và không phân biệt. Path 6 — sự kết hợp đối lập là nghệ thuật cao nhất của tình yêu.",
+    7: "Hai con ngựa kéo cỗ xe — một trắng (logic), một đen (cảm xúc). Chúng muốn đi hướng khác nhau, kéo người đánh xe sắp ngã. Người đánh xe không kéo dây mạnh hơn. Anh ngồi vững, thở sâu, và để Ý CHÍ làm việc. Cỗ xe đi đúng hướng. Path 7 — chiến thắng nội tại trước khi chiến thắng bên ngoài.",
+    8: "Cô gái muốn thuần hóa con sư tử dữ. Người ta đưa cho cô roi, dao, lưới. Cô từ chối tất cả — chỉ ngồi xuống cách sư tử 10 mét. Sư tử quan sát cô 7 ngày. Đến ngày thứ 8, nó tự đi đến đặt đầu vào lòng cô. Path 8 — sức mạnh thật là dịu dàng có nguyên tắc.",
+    9: "Ẩn sĩ leo lên núi 30 năm tìm câu trả lời. Khi xuống, có người hỏi: 'Thầy đã thấy gì trên đó?' 'Tôi thấy MÌNH,' ông nói. 'Chỉ vậy thôi?' 'Đủ. Khi ta hiểu mình, ta hiểu vũ trụ.' Path 9 — đôi khi cô đơn không phải hình phạt, mà là điều kiện cần.",
+    10: "Bánh xe vận mệnh quay. Hôm qua tôi là vua. Hôm nay tôi là kẻ ăn xin. Ngày mai? Không ai biết. Nhưng người trí mỉm cười: 'Tôi vẫn là TÔI, dù ngồi trên ngai hay ngồi trên đường.' Path 10 — tự ngã không phụ thuộc hoàn cảnh.",
+    11: "Bồ tát cân hai nghiệp trên cán cân vũ trụ. Một nghiệp tốt nặng như trái núi. Một nghiệp xấu nhẹ như lông hồng. Cán cân nghiêng về phía nhẹ. Người ta hỏi: 'Vì sao?' Bồ tát: 'Vì lông hồng đó là một sự hối hận chân thành. Hối hận thật nặng hơn núi giả.' Path 11 — công lý vũ trụ tinh tế hơn ta nghĩ.",
+    12: "Người đàn ông treo ngược trên cây 100 ngày. Người đi qua cười nhạo, ném đá. Anh không phản ứng. Bởi vì từ góc nhìn này — đầu xuống, chân lên — anh thấy những điều người đứng thẳng không bao giờ thấy. Cuối cùng anh xuống, và là người DUY NHẤT trong làng giải được câu đố cứu cả ngôi làng. Path 12 — đảo ngược góc nhìn để nhìn thấy.",
+    13: "Hạt giống chết để cây mọc. Cây chết để rừng sống. Rừng cháy để đất tái sinh. Đó là quy luật vũ trụ. Đứa trẻ hỏi mẹ: 'Cái chết có buồn không?' Mẹ ôm con: 'Không, con à. Chỉ có cái không sống đủ mới đáng buồn.' Path 13 — mọi cái chết đều là cánh cửa.",
+    14: "Thiên thần đổ nước từ chén này sang chén kia mãi không ngừng. Không bao giờ tràn. Không bao giờ cạn. Một người hỏi: 'Bạn đang làm gì?' 'Tôi đang LÀ cuộc sống. Cân bằng không phải đứng yên — đó là chuyển động liên tục với ý thức.' Path 14 — hài hòa là kỹ năng, không phải may mắn.",
+    15: "Người đàn ông thấy mình bị xích vào két vàng. Anh hét lên 'Cứu tôi!' suốt 30 năm. Quỷ đứng cười: 'Chìa khóa trong túi áo mày từ đầu.' Anh nhìn xuống — quả nhiên có chìa. Anh đã có nó SUỐT 30 năm mà không biết. Path 15 — bạn không bị xiềng, bạn TỰ xích.",
+    16: "Tháp đứng vững 100 năm. Một đêm sét đánh — toàn bộ sụp xuống. Người ta khóc, gọi đó là thảm họa. Nhưng từ đống đổ nát, một cây xanh mọc lên — loài cây không thể nảy mầm dưới bóng tháp. Sét không phá hủy — sét GIẢI PHÓNG. Path 16 — đôi khi vũ trụ phá nhà bạn để buộc bạn xây ngôi nhà thật.",
+    17: "Sau 40 ngày sa mạc không nước, cô tưởng mình sẽ chết. Đêm thứ 41 cô nằm xuống, nhìn lên trời. Sao sáng đến lạ thường — đẹp đến nỗi cô quên cả khát. Sáng hôm sau, oasis hiện ra cách 2km. Đôi khi vũ trụ chỉ chờ bạn ngẩng đầu lên. Path 17 — hy vọng là sao chỉ đường.",
+    18: "Trăng treo nửa vời giữa thật và mơ. Người ngu sợ trăng vì không phân biệt được. Người trí thì tận hưởng — vì biết cả hai đều là HIỆN THỰC ở những tầng khác nhau. Một thi sĩ uống trà dưới trăng và cười: 'Tôi không cần biết đâu là thật — tôi chỉ cần SỐNG.' Path 18 — vô thức cũng là một dạng tỉnh táo.",
+    19: "Mặt trời mọc và đứa bé 3 tuổi cười khanh khách. Không lý do. Không vì ai khen. Không vì có quà. Chỉ vì SỐNG. Người trí cũng cười như vậy mỗi sáng — đó là bí mật của hạnh phúc bền vững mà các triết gia tìm cả đời. Path 19 — niềm vui không cần lý do.",
+    20: "Tiếng kèn vang từ trời cao. 'WAKE UP!' Nó gọi tên mỗi người. Đa số nghe thoáng qua rồi ngủ tiếp. Một số ít choàng dậy. Cuộc đời họ không bao giờ giống cũ — họ đã NHỚ ra mình là ai, mình đến để làm gì. Path 20 — tỉnh thức không phải sự kiện, mà là sự CHỌN.",
+    21: "Cô bé bắt đầu hành trình ở tuổi 18 với balo nhỏ. 50 năm sau, cô về làng cũ — nhăn nheo, tóc bạc. Cô ngồi dưới cây bồ đề chỗ ngày xưa cô từng ngồi, và cười. Cả vũ trụ chỉ là một vòng tròn. Nhưng giờ cô KNOW. Path 21 — hoàn thành không phải đến nơi mới, mà là về nhà với hiểu biết.",
+    22: "Người đàn ông 70 tuổi đứng trên bờ vực. Anh có thể về hưu, an nhàn, kể chuyện cũ. Nhưng anh nhảy. Trên không trung anh cười sảng khoái: 'Lại bắt đầu một hành trình nữa rồi!' Đó là kẻ khờ — luôn dám nhảy lại. Mỗi lần nhảy là một kiếp mới. Path 22 — tinh thần trẻ thơ là vĩnh cửu."
+  },
+  vd: {
+    1: "Lord Krishna nói với Arjuna trên chiến trường Kurukshetra: 'Hãy là MẶT TRỜI — không cần ai cám ơn để chiếu sáng. Mặt trời cứ tỏa sáng, dù người ta ngợi ca hay nguyền rủa.' Arjuna thắng trận lịch sử không phải vì sức mạnh, mà vì làm đúng dharma không ngó tới hậu quả. Đó là số 1 Surya — dẫn đầu mà không cần được công nhận.",
+    2: "Devi Parvati ngồi bên hồ thiền 12 năm. Mỗi đêm trăng tròn, bà chỉ LẮNG NGHE — không nói, không cầu nguyện, không xin xỏ. Cuối cùng Shiva tìm bà: 'Em đã học được gì sau 12 năm?' Bà mỉm cười: 'Em đã học được cách KHÔNG cần học. Trí tuệ đã ở đây từ đầu — em chỉ cần ngồi yên đủ lâu để nhận ra.' Số 2 Chandra — trí tuệ qua sự lặng yên.",
+    3: "Guru Drona dạy 100 hoàng tử Pandava và Kaurava. Khi được hỏi học trò nào giỏi nhất, ông không chọn ai trong cung điện. Ông nói: 'Eklavya — cậu bé tôi CHƯA BAO GIỜ DẠY.' Eklavya tự học bằng cách chỉ NGHĨ về Drona như người thầy. Sức mạnh tinh thần thay thế thầy giáo vật lý. Đó là số 3 Brihaspati — niềm tin tạo ra trí tuệ.",
+    4: "Rahu là cái đầu rắn không có cơ thể. Bay khắp vũ trụ, không nơi nương tựa, không quê hương. Nhưng vì không có gốc rễ, Rahu thấy được những thứ các vị thần định cư khác không bao giờ thấy. Khi mọi người đứng yên, Rahu di chuyển. Khi mọi người định nghĩa được mình, Rahu vẫn là bí ẩn. Số 4 Rahu — kẻ lưu lạc, và đó là siêu năng lực.",
+    5: "Hanuman trẻ — sao Thủy của Ấn Độ — bay khắp Lanka tìm Sita. Anh nhanh, thông minh, nói được mọi ngôn ngữ. Khi đứng trước Ravana hùng mạnh, anh không sợ. Anh CHỌC: 'Tôi chỉ là một con khỉ — sao bệ hạ phải sợ tôi đến mức trói tôi?' Ravana giận đến mức để hớ. Số 5 Budh — dùng trí thay sức mạnh.",
+    6: "Lakshmi — nữ thần của giàu sang và sắc đẹp — xuất hiện từ biển sữa được khuấy. Tất cả các vị thần đều muốn cưới bà. Nhưng bà CHỌN Vishnu — vị thần bảo vệ thế giới, không phải Indra (vua) hay Shiva (sức mạnh). Vẻ đẹp không phải để chiếm hữu — mà để CHỌN người xứng đáng. Số 6 Shukra — cái đẹp có nguyên tắc cao.",
+    7: "Ketu là cái đuôi rắn — không có đầu để suy nghĩ logic. Nó bay khắp chiêm tinh đồ, mang theo ký ức mọi kiếp trước. Người số 7 thường biết những điều họ chưa từng học. Một đứa trẻ 5 tuổi đột nhiên thuộc một bài hát tiếng Ý mà bố mẹ chưa bao giờ nghe — đó là Ketu thì thầm. Số 7 Ketu — trí tuệ kiếp trước.",
+    8: "Khi Saturn đến nhà ai, nhà đó khổ 7 năm rưỡi (Sade Sati). Mọi người tránh, cúng để xua. Nhưng vị thiền sư già nói khác: 'Hãy CHÀO ĐÓN Shani như khách quý. Sau 7 năm rưỡi mày sẽ ra khỏi nhà như con người HOÀN TOÀN khác — mạnh hơn, sâu hơn, đáng tin hơn. Saturn không trừng phạt — Saturn DẠY.' Số 8 Shani — karma là người thầy nghiêm khắc nhất.",
+    9: "Hanuman vẫn ngồi cạnh Rama hàng triệu năm sau khi cuộc chiến Ramayana kết thúc. Các vị thần khác thắc mắc: 'Sao em không lên cõi cao hơn? Em đã đủ tu hành.' Hanuman chỉ trả lời: 'Khi nào còn người cần Rama, em còn ở đây phục vụ. Em không cần cõi cao — em cần là CHIẾN BINH.' Số 9 Mangal — chiến binh phục vụ lý tưởng vĩnh viễn."
+  }
+};
 
 const CH_LETTER = { A:1,I:1,J:1,Q:1,Y:1, B:2,K:2,R:2, C:3,G:3,L:3,S:3, D:4,M:4,T:4, E:5,H:5,N:5,X:5, U:6,V:6,W:6, O:7,Z:7, F:8,P:8 };
 const CH_VOWELS = new Set(['A','E','I','O','U']);
@@ -896,20 +1012,69 @@ function calcPythagoras() {
   const levelsHtml = lpRich ? lpRich.levels.map((lv,i) => `<div class="level-row"><div class="level-num">LV ${i+1}</div><div class="level-text">${lv}</div></div>`).join('') : '';
   const famousHtml = lpData?.famous?.map(f => `<div class="famous-item"><span class="who">${f.name}</span> · <span class="role">${f.role}</span></div>`).join('') || '';
   const quotesHtml = lpRich?.quotes?.map(q => `<div class="quote-box"><p>${q.text}</p>${q.author ? `<div class="author">— ${q.author}</div>` : ''}</div>`).join('') || '';
+  // Tính tất cả chỉ số phụ
+  const bday = pyReduce(d);
+  const mat = pyMaturity(lp, exp);
+  const bal = pyBalance(name);
+  const bridgeLpExp = pyBridgeGEIN(lp.value, exp.value);
+  const bridgeSoulPers = pyBridgeGEIN(soul.value, pers.value);
+  const passion = pyHiddenPassion(name);
+  const lessons = pyKarmicLessons(name);
+  const subc = 9 - lessons.length;
+  const parts = name.trim().split(/\s+/);
+  const givenName = parts[parts.length - 1];
+  const rational = pyRationalThought(givenName, d);
+  const today = new Date();
+  const curY = today.getFullYear(), curM = today.getMonth() + 1;
+  const py_year = pyPersonalYear(d, m, curY);
+  const py_month = pyPersonalMonth(py_year, curM);
+
   document.getElementById('py-results').innerHTML = `
     <div style="text-align:center;padding:14px 0;"><h3 style="font-family:'Cinzel',serif;color:var(--gold-light);font-size:1.15rem;letter-spacing:2px;">${name.toUpperCase()}</h3><p style="color:var(--text-mute);font-size:0.9rem;font-style:italic;">${d}/${m}/${y}</p></div>
-    <h3 class="section-title">Chỉ số cốt lõi</h3>
+
+    <h3 class="section-title">🌟 Chỉ số cốt lõi</h3>
     <div class="number-grid">
       ${renderNumCard('Đường đời', lp.value, lpData?.short || '', lp.kd, PY_MASTER.has(lp.value), `pyShow(${lp.value},${lp.kd})`)}
       ${renderNumCard('Sứ mệnh', exp.value, PY_NUMBERS[exp.value]?.short || '', exp.kd, PY_MASTER.has(exp.value), `pyShow(${exp.value},${exp.kd})`)}
       ${renderNumCard('Linh hồn', soul.value, PY_NUMBERS[soul.value]?.short || '', soul.kd, PY_MASTER.has(soul.value), `pyShow(${soul.value},${soul.kd})`)}
       ${renderNumCard('Nhân cách', pers.value, PY_NUMBERS[pers.value]?.short || '', pers.kd, PY_MASTER.has(pers.value), `pyShow(${pers.value},${pers.kd})`)}
     </div>
+
+    <h3 class="section-title">🔗 Chỉ số liên kết</h3>
+    <div class="number-grid">
+      ${renderNumCard('Kết nối ĐĐ-SM', bridgeLpExp, bridgeLpExp === 0 ? 'Hai năng lượng hoàn toàn hòa hợp' : 'Khoảng cách giữa con đường và sứ mệnh', null, false, `pyShowBridge(${bridgeLpExp},'Kết nối ĐĐ-SM')`)}
+      ${renderNumCard('LK Nhân cách & Linh hồn', bridgeSoulPers, bridgeSoulPers === 0 ? 'Trong và ngoài thống nhất' : 'Khoảng cách trong-ngoài', null, false, `pyShowBridge(${bridgeSoulPers},'LK Nhân cách-Linh hồn')`)}
+    </div>
+
+    <h3 class="section-title">📅 Chỉ số ngày sinh &amp; tên</h3>
+    <div class="number-grid">
+      ${renderNumCard('Trưởng thành', mat, PY_NUMBERS[mat]?.short || '', null, PY_MASTER.has(mat), `pyShow(${mat},null)`)}
+      ${renderNumCard('Cân bằng', bal, PY_NUMBERS[bal]?.short || '', null, false, `pyShow(${bal},null)`)}
+      ${renderNumCard('Ngày sinh', bday, PY_NUMBERS[bday]?.short || '', null, false, `pyShow(${bday},null)`)}
+      ${renderNumCard('Tư duy lý trí', rational, PY_NUMBERS[rational]?.short || '', null, false, `pyShow(${rational},null)`)}
+    </div>
+
+    <h3 class="section-title">💎 Chỉ số ẩn (từ tên)</h3>
+    <div class="number-grid">
+      ${renderNumCard('Đam mê', passion.length === 1 ? passion[0] : passion, 'Số xuất hiện nhiều nhất trong tên', null, false, `pyShowPassion('${passion.join(',')}')`)}
+      ${lessons.length > 0
+        ? renderNumCard('Số thiếu', lessons, lessons.length + ' bài học cần học', null, false, `pyShowLessons('${lessons.join(',')}')`)
+        : renderNumCard('Số thiếu', '✓', 'Có đủ 1-9 trong tên', null, false, `pyShowLessons('')`)
+      }
+      ${renderNumCard('Sức mạnh tiềm thức', subc, '9 − số thiếu', null, false, `pyShow(${subc},null)`)}
+    </div>
+
+    <h3 class="section-title">📆 Chu kỳ hiện tại (${curY})</h3>
+    <div class="number-grid">
+      ${renderNumCard(`Năm cá nhân ${curY}`, py_year, PY_NUMBERS[py_year]?.short || '', null, PY_MASTER.has(py_year), `pyShow(${py_year},null)`)}
+      ${renderNumCard(`Tháng ${curM}/${curY}`, py_month, PY_NUMBERS[py_month]?.short || '', null, PY_MASTER.has(py_month), `pyShow(${py_month},null)`)}
+    </div>
     <div class="card" style="margin-top:18px;">
       <h2>Phân tích sâu Đường đời ${lp.value} - ${lpData?.title}</h2>
       <p style="font-family:'Cinzel',serif;color:var(--gold-dark);font-size:0.78rem;letter-spacing:3px;text-transform:uppercase;margin-bottom:12px;">${lpData?.archetype || ''}</p>
       <div class="keywords">${(lpData?.keywords || []).map(k => `<span>${k}</span>`).join('')}</div>
       ${lp.kd ? `<div class="quote-box" style="border-left-color:var(--crimson);background:rgba(139,58,74,0.1);"><p style="color:var(--terra);">⚠ Nợ Nghiệp ${lp.kd}/${reduceFlat(lp.kd)}</p><p>${PY_KARMIC_DEBT[lp.kd]}</p></div>` : ''}
+      ${STORIES.py[lp.value] ? `<h3 class="section-title">📖 Câu chuyện minh họa</h3><div class="story-box"><span class="story-label">Đường đời ${lp.value} qua một câu chuyện</span><p>${STORIES.py[lp.value]}</p></div>` : ''}
       <h3 class="section-title">Năng lượng Chuẩn - Ngược - Quá</h3>${energyHtml}
       <h3 class="section-title">6 Levels phát triển</h3><div class="levels">${levelsHtml}</div>
       ${lpRich?.graduate ? `<h3 class="section-title">Bài học cần tốt nghiệp</h3><div class="meaning"><p style="color:var(--text);">${lpRich.graduate}</p></div>` : ''}
@@ -923,16 +1088,18 @@ function pyShow(num, kd) {
   const levelsHtml = rich ? rich.levels.map((lv,i) => `<div class="level-row"><div class="level-num">LV ${i+1}</div><div class="level-text">${lv}</div></div>`).join('') : '';
   const famousHtml = data.famous?.map(f => `<div class="famous-item"><span class="who">${f.name}</span> · <span class="role">${f.role}</span></div>`).join('') || '';
   const quotesHtml = rich?.quotes?.map(q => `<div class="quote-box"><p>${q.text}</p>${q.author ? `<div class="author">— ${q.author}</div>` : ''}</div>`).join('') || '';
-  document.getElementById('modal-body').innerHTML = `<h2>Số ${num} - ${data.title}</h2><div class="archetype-line">${data.archetype}</div><div class="keywords">${data.keywords.map(k=>`<span>${k}</span>`).join('')}</div>${kd ? `<div class="quote-box" style="border-left-color:var(--crimson);background:rgba(139,58,74,0.1);"><p style="color:var(--terra);">⚠ Nợ Nghiệp ${kd}/${reduceFlat(kd)}</p><p>${PY_KARMIC_DEBT[kd]}</p></div>` : ''}<h3>Năng lượng Chuẩn - Ngược - Quá</h3>${energyHtml}<h3>6 Levels phát triển</h3><div class="levels">${levelsHtml}</div>${rich?.graduate ? `<h3>Bài học cần tốt nghiệp</h3><p>${rich.graduate}</p>` : ''}<h3>Người nổi tiếng</h3><div class="famous-list">${famousHtml}</div><h3>Câu nói tiêu biểu</h3>${quotesHtml}`;
+  const story = STORIES.py[num];
+  const storyHtml = story ? `<div class="story-box"><span class="story-label">Câu chuyện minh họa</span><p>${story}</p></div>` : '';
+  document.getElementById('modal-body').innerHTML = `<h2>Số ${num} - ${data.title}</h2><div class="archetype-line">${data.archetype}</div><div class="keywords">${data.keywords.map(k=>`<span>${k}</span>`).join('')}</div>${kd ? `<div class="quote-box" style="border-left-color:var(--crimson);background:rgba(139,58,74,0.1);"><p style="color:var(--terra);">⚠ Nợ Nghiệp ${kd}/${reduceFlat(kd)}</p><p>${PY_KARMIC_DEBT[kd]}</p></div>` : ''}${storyHtml}<h3>Năng lượng Chuẩn - Ngược - Quá</h3>${energyHtml}<h3>6 Levels phát triển</h3><div class="levels">${levelsHtml}</div>${rich?.graduate ? `<h3>Bài học cần tốt nghiệp</h3><p>${rich.graduate}</p>` : ''}<h3>Người nổi tiếng</h3><div class="famous-list">${famousHtml}</div><h3>Câu nói tiêu biểu</h3>${quotesHtml}`;
   document.getElementById('modal').classList.add('show');
 }
 function calcPyPinnacle() {
   const dob = document.getElementById('py-dob2').value;
   if (!dob) { alert('Chọn ngày sinh'); return; }
   const [y,m,d] = dob.split('-').map(Number);
-  const dR = pyReduce(d), mR = pyReduce(m), yR = pyReduce(y);
+  const dR = reduceFlat(d), mR = reduceFlat(m), yR = reduceFlat(y);
   const lpFlat = reduceFlat(dR + mR + yR);
-  const lp = pyReduce(dR + mR + yR);
+  const lp = pyReduce(pyReduce(d) + pyReduce(m) + pyReduce(y));
   const p1 = pyReduceWithKD(mR + dR), p2 = pyReduceWithKD(dR + yR), p3 = pyReduceWithKD(p1.value + p2.value), p4 = pyReduceWithKD(mR + yR);
   const firstAge = 36 - lpFlat;
   const ch1 = reduceFlat(Math.abs(mR - dR)), ch2 = reduceFlat(Math.abs(dR - yR)), ch3 = reduceFlat(Math.abs(ch1 - ch2)), ch4 = reduceFlat(Math.abs(mR - yR));
@@ -941,6 +1108,42 @@ function calcPyPinnacle() {
   document.getElementById('py-pinnacle-results').innerHTML = `
     <div class="card"><h2>4 Chặng cuộc đời (Đường đời ${lp})</h2><div class="pinnacle-grid">${pins.map(p => `<div class="pinnacle"><div class="age">Tuổi ${p.from}${p.to==='cuối đời'?' trở đi':' - '+p.to}</div><div class="name">${p.name}</div><div class="num" onclick="pyShow(${p.p.value},null)">${p.p.value}</div>${p.p.kd ? `<div class="kd-badge" style="position:static;display:inline-block;">Nợ Nghiệp ${p.p.kd}</div>` : ''}<div style="font-size:0.8rem;color:var(--text-mute);margin-top:4px;font-style:italic;">= ${p.formula}</div><p style="font-size:0.9rem;color:var(--text-dim);margin-top:8px;">${PY_NUMBERS[p.p.value]?.short || ''}</p></div>`).join('')}</div></div>
     <div class="card"><h2>4 Thử thách</h2><div class="pinnacle-grid">${challenges.map(c => `<div class="pinnacle challenge"><div class="name" style="color:var(--terra)">${c.name}</div><div class="num">${c.num}</div><div style="font-size:0.8rem;color:var(--text-mute);margin-top:4px;font-style:italic;">= ${c.formula}</div><p style="font-size:0.9rem;color:var(--text-dim);margin-top:8px;">Vượt qua: ${PY_NUMBERS[c.num]?.short || ''}</p></div>`).join('')}</div></div>`;
+}
+function pyShowBridge(num, label) {
+  const meanings = {
+    0:'Hai năng lượng trùng nhau — bạn đang đi đúng đường, không có khoảng cách giữa con đường tự nhiên và sứ mệnh được giao.',
+    1:'Cần đưa ra quyết định sống là chính mình. Cần độc lập, tự chủ, đứng lên trên đôi chân của mình.',
+    2:'Cần học cách hợp tác, giữ hòa khí. Nhạy bén với nhu cầu của người khác, dám nói lên chính kiến.',
+    3:'Cần phát triển niềm tin vào bản thân. Sẵn sàng chia sẻ, lan tỏa, dành thời gian hưởng thụ và tái tạo năng lượng.',
+    4:'Cần đáng tin hơn, đúng giờ hơn. Thượng tôn kỷ luật — đã nói là làm, không trì hoãn.',
+    5:'Dám chấp nhận rủi ro, sáng tạo nhiều hơn, cho mình cơ hội trải nghiệm. Không để định kiến của người khác ảnh hưởng.',
+    6:'Làm tốt vai trò trong gia đình, học cách cho đi yêu thương. Cân bằng bản thân — gia đình — công việc.',
+    7:'Ý thức phát triển bản thân, giá trị đến từ tri thức. Nâng cấp thành chiến lược gia, dành thời gian cho tâm linh.',
+    8:'Hiểu bản chất đồng tiền. Lãnh đạo những mô hình kinh doanh giúp được nhiều người.'
+  };
+  document.getElementById('modal-body').innerHTML = `<h2>${label} - Số ${num}</h2><div class="archetype-line">CHỈ SỐ LIÊN KẾT</div><p style="font-size:1.02rem;line-height:1.7;">${meanings[num] || ''}</p><div class="info-box">Giá trị từ 0-8. Số càng nhỏ, hai năng lượng càng đồng điệu. Số càng lớn, càng có sự kéo căng cần học để cân bằng.</div>`;
+  document.getElementById('modal').classList.add('show');
+}
+function pyShowPassion(numsStr) {
+  const nums = numsStr.split(',').filter(Boolean);
+  let html = `<h2>Đam mê tiềm ẩn</h2><div class="archetype-line">SỐ XUẤT HIỆN NHIỀU NHẤT TRONG TÊN</div><p>Đây là tài năng tiềm ẩn, đam mê tự nhiên — lĩnh vực bạn dễ tỏa sáng nhất. Bạn không cần học mà vẫn giỏi.</p>`;
+  for (const n of nums) {
+    const m = PY_NUMBERS[parseInt(n)];
+    if (m) html += `<h3>Số ${n} - ${m.title}</h3><p>${m.archetype}</p>`;
+  }
+  document.getElementById('modal-body').innerHTML = html;
+  document.getElementById('modal').classList.add('show');
+}
+function pyShowLessons(numsStr) {
+  const nums = numsStr.split(',').filter(Boolean);
+  let html = `<h2>Số thiếu (Karmic Lessons)</h2><div class="archetype-line">CÁC SỐ KHÔNG XUẤT HIỆN TRONG TÊN</div><p>Đây là những bài học mà linh hồn bạn cần học trong kiếp này. Mỗi số thiếu là một "lỗ hổng" cần bù đắp qua trải nghiệm.</p>`;
+  if (nums.length === 0) html += `<p style="color:var(--gold);">✓ Tên bạn có đủ 9 số — không có số thiếu. Hiếm gặp!</p>`;
+  for (const n of nums) {
+    const m = PY_NUMBERS[parseInt(n)];
+    if (m) html += `<h3>Số ${n} - ${m.title}</h3><p>Bạn cần học năng lượng: ${m.keywords.join(', ').toLowerCase()}.</p>`;
+  }
+  document.getElementById('modal-body').innerHTML = html;
+  document.getElementById('modal').classList.add('show');
 }
 function buildPyLibrary() {
   document.getElementById('py-number-library').innerHTML = [1,2,3,4,5,6,7,8,9,11,22,33].map(n => {
@@ -980,6 +1183,7 @@ function calcChaldean() {
       html += `<div class="card" style="margin-top:18px;">
         <h2>🔍 Phân tích sâu Số Tâm linh ${dayNum} - ${planet.title}</h2>
         <p style="font-family:'Cinzel',serif;color:var(--gold-dark);font-size:0.78rem;letter-spacing:3px;text-transform:uppercase;margin-bottom:12px;">${planet.short}</p>
+        ${STORIES.ch[dayNum] ? `<div class="story-box"><span class="story-label">Câu chuyện minh họa</span><p>${STORIES.ch[dayNum]}</p></div>` : ''}
         <h3 class="section-title">Tính cách</h3><p style="color:var(--text-dim);">${r.personality}</p>
         <h3 class="section-title">Sự nghiệp phù hợp</h3><p style="color:var(--text-dim);">${r.career}</p>
         <h3 class="section-title">Tình yêu</h3><p style="color:var(--text-dim);">${r.love}</p>
@@ -1000,7 +1204,9 @@ function calcChaldean() {
 }
 function chShow(num) {
   const m = CH_NUMBERS[num]; const r = CH_RICH[num]; if (!m) return;
+  const story = STORIES.ch[num];
   let html = `<h2>Số ${num} - ${m.title}</h2><div class="archetype-line">CHALDEAN · ${m.short.toUpperCase()}</div><p style="font-size:1.02rem;line-height:1.7;">${m.desc}</p>`;
+  if (story) html += `<div class="story-box"><span class="story-label">Câu chuyện minh họa</span><p>${story}</p></div>`;
   if (r) {
     html += `<h3>Tính cách</h3><p>${r.personality}</p>
       <h3>Sự nghiệp phù hợp</h3><p>${r.career}</p>
@@ -1043,6 +1249,7 @@ function calcKabbalah() {
   if (r) {
     html += `<div class="card">
       <h2>🔍 Phân tích sâu Path ${result.path}</h2>
+      ${STORIES.kb[result.path] ? `<div class="story-box"><span class="story-label">Câu chuyện minh họa</span><p>${STORIES.kb[result.path]}</p></div>` : ''}
       <h3 class="section-title">Ý nghĩa chữ Hebrew "${path.letter}"</h3>
       <p style="color:var(--text-dim);font-style:italic;">${r.letterMeaning}</p>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin:14px 0;">
@@ -1064,9 +1271,11 @@ function calcKabbalah() {
 }
 function kbShow(pathNum) {
   const p = KB_PATHS[pathNum]; const r = KB_RICH[pathNum]; if (!p) return;
+  const story = STORIES.kb[pathNum];
   let html = `<h2>Path ${pathNum} - ${p.title}</h2><div class="archetype-line">KABBALAH · ${p.letter} (${p.hebrew})</div>
     <div style="text-align:center;font-size:6rem;color:var(--mystical);margin:20px 0;text-shadow:0 0 30px rgba(183,148,244,0.5);">${p.hebrew}</div>
     <p style="font-size:1.05rem;line-height:1.8;">${p.desc}</p>`;
+  if (story) html += `<div class="story-box"><span class="story-label">Câu chuyện minh họa</span><p>${story}</p></div>`;
   if (r) {
     html += `<h3>Ý nghĩa chữ Hebrew "${p.letter}"</h3><p style="font-style:italic;">${r.letterMeaning}</p>
       <h3>Yếu tố / Hành tinh</h3><p>${r.element}</p>
@@ -1111,6 +1320,7 @@ function calcVedic() {
     html += `<div class="card" style="margin-top:18px;">
       <h2 style="color:${p.color};">🔍 Phân tích sâu Tâm số ${mulank} - ${p.name}</h2>
       <p style="font-family:'Cinzel',serif;color:var(--gold-dark);font-size:0.78rem;letter-spacing:3px;text-transform:uppercase;margin-bottom:14px;">${p.title}</p>
+      ${STORIES.vd[mulank] ? `<div class="story-box"><span class="story-label">Câu chuyện minh họa</span><p>${STORIES.vd[mulank]}</p></div>` : ''}
 
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:14px;">
         <div class="info-box" style="margin:0;"><strong>Ngày sinh:</strong> ${r.days}</div>
@@ -1149,8 +1359,10 @@ function calcVedic() {
 }
 function vdShow(num) {
   const p = VD_PLANETS[num]; const r = VD_RICH[num]; if (!p) return;
+  const story = STORIES.vd[num];
   let html = `<h2 style="color:${p.color};">Số ${num} - ${p.name}</h2><div class="archetype-line">VEDIC · ${p.title.toUpperCase()}</div>
     <div style="text-align:center;font-size:6rem;color:${p.color};margin:20px 0;text-shadow:0 0 30px ${p.color}80;">${p.emoji}</div>`;
+  if (story) html += `<div class="story-box"><span class="story-label">Câu chuyện minh họa</span><p>${story}</p></div>`;
   if (r) {
     html += `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:14px 0;">
         <div class="info-box" style="margin:0;"><strong>Ngày sinh:</strong> ${r.days}</div>
